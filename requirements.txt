@@ -1,0 +1,57 @@
+# 핵심 의존성
+fastapi>=0.110.0
+uvicorn>=0.29.0
+streamlit>=1.32.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+
+# LLM 백엔드
+requests>=2.31.0
+httpx>=0.27.0
+beautifulsoup4>=4.12.3
+transformers>=4.39.0
+torch>=2.2.0
+accelerate>=0.28.0
+bitsandbytes>=0.43.0  # 4/8비트 양자화
+
+# 문서 처리
+python-docx>=1.1.0
+PyPDF2>=3.0.0
+python-pptx>=0.6.23
+markdown>=3.6
+pyyaml>=6.0.1
+
+# 이미지 처리
+Pillow>=10.2.0
+numpy>=1.26.0
+
+# 벡터 검색 / RAG
+sentence-transformers>=2.7.0
+faiss-cpu>=1.8.0  # CPU 버전 (GPU 옵션: faiss-gpu)
+rank-bm25>=0.2.2
+
+# 데이터베이스 / 스토리지
+# sqlite3는 표준 라이브러리에 포함됨
+
+# CLI
+click>=8.1.7
+rich>=13.7.0
+typer>=0.12.0
+
+# 유틸리티
+python-dotenv>=1.0.1
+aiofiles>=23.2.1
+watchdog>=4.0.0
+psutil>=5.9.8
+
+# 코드 실행 / 분석
+black>=24.3.0
+ast-comments>=1.2.2
+
+# 테스트
+pytest>=8.1.0
+pytest-asyncio>=0.23.0
+
+# 선택적: OCR (필요 시 설치)
+# pytesseract>=0.3.10
+# easyocr>=1.7.1

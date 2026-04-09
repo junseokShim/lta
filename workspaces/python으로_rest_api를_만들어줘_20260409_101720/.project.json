@@ -1,0 +1,18 @@
+{
+  "project_id": "python으로_rest_api를_만들어줘_20260409_101720",
+  "name": "Python으로 REST API를 만들어줘",
+  "description": "Python으로 REST API를 만들어줘",
+  "created_at": "2026-04-09T10:17:20.041753",
+  "updated_at": "2026-04-09T10:36:47.579968",
+  "task_count": 0,
+  "generated_files": [
+    "python으로_rest_api를_만들어줘_20260409_101720\\artifacts\\generated_2.text",
+    "python으로_rest_api를_만들어줘_20260409_101720\\artifacts\\generated_2.python",
+    "python으로_rest_api를_만들어줘_20260409_101720\\artifacts\\test_generated_2.py",
+    "python으로_rest_api를_만들어줘_20260409_101720\\reports\\README.md",
+    "python으로_rest_api를_만들어줘_20260409_101720\\reports\\final_output.md",
+    "python으로_rest_api를_만들어줘_20260409_101720\\logs\\run_20260409_103647.log"
+  ],
+  "tags": [],
+  "config": {}
+}

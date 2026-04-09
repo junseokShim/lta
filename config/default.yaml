@@ -1,0 +1,123 @@
+# ===== 기본 설정 파일 =====
+
+workspace:
+  root: "./workspaces"
+  max_projects: 100
+  auto_save: true
+
+backend:
+  default: "ollama"
+  timeout: 120
+  retry_attempts: 3
+
+ollama:
+  host: "http://localhost:11434"
+  default_model: "gemma4:e4b"
+  vision_model: "llava:7b"
+  fast_model: "gemma4:e4b"  # 빠른 작업용 경량 모델
+  temperature: 0.7
+  top_p: 0.9
+  context_length: 4096
+
+transformers:
+  model_id: "mistralai/Mistral-7B-Instruct-v0.2"
+  device: "auto"  # auto = CUDA → MPS (Apple Silicon) → CPU 자동 선택
+  load_in_4bit: true  # CUDA 전용 (MPS/CPU에서는 자동으로 무시됨)
+  load_in_8bit: false
+  max_new_tokens: 2048
+  temperature: 0.7
+
+agents:
+  manager:
+    model_override: null  # null이면 default 사용
+    max_iterations: 10
+  planner:
+    model_override: null
+    use_fast_model: true  # 플래너는 경량 모델 사용 가능
+  coder:
+    model_override: null
+    use_fast_model: false  # 코더는 강력한 모델 필요
+  reviewer:
+    model_override: null
+    use_fast_model: true
+  researcher:
+    model_override: null
+    use_fast_model: true
+  tester:
+    model_override: null
+    use_fast_model: false
+  document:
+    model_override: null
+    use_fast_model: true
+  vision:
+    model_override: null  # vision 모델 자동 선택
+
+tools:
+  filesystem:
+    max_file_size_mb: 50
+    allowed_extensions:
+      - ".txt"
+      - ".md"
+      - ".py"
+      - ".js"
+      - ".ts"
+      - ".json"
+      - ".yaml"
+      - ".yml"
+      - ".csv"
+      - ".html"
+      - ".css"
+      - ".sh"
+      - ".toml"
+      - ".pdf"
+      - ".docx"
+      - ".pptx"
+  shell:
+    timeout: 60
+    allowed_commands:
+      - "python"
+      - "python3"
+      - "pip"
+      - "pytest"
+      - "git"
+      - "ls"
+      - "cat"
+      - "echo"
+      - "mkdir"
+      - "cp"
+      - "mv"
+    blocked_commands:
+      - "rm -rf /"
+      - "sudo"
+      - "dd"
+  image:
+    max_image_size_mb: 20
+    supported_formats:
+      - ".png"
+      - ".jpg"
+      - ".jpeg"
+      - ".webp"
+      - ".bmp"
+      - ".gif"
+
+memory:
+  task_history_limit: 1000
+  retrieval_top_k: 5
+  chunk_size: 512
+  chunk_overlap: 64
+  max_indexed_files: 2000
+  max_total_chunks: 25000
+  max_chunks_per_file: 400
+  max_index_file_size_mb: 2.5
+
+logging:
+  level: "INFO"
+  file: "./logs/agent.log"
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+
+ui:
+  host: "0.0.0.0"
+  port: 8501
+  theme: "light"
+  max_messages_display: 100

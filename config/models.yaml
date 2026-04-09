@@ -1,0 +1,97 @@
+# ===== 모델 설정 - GTX 5070급 (12GB VRAM) 기준 권장 모델 =====
+
+# Ollama 권장 모델 목록
+ollama_models:
+  # 메인 작업용 (7-8B 모델, 4-6GB VRAM)
+  - name: "llama3.1:8b"
+    description: "Meta Llama 3.1 8B - 범용 고성능"
+    vram_gb: 5.5
+    recommended_for: ["coder", "manager"]
+
+  - name: "llama3.2:3b"
+    description: "Meta Llama 3.2 3B - 경량 빠른 모델"
+    vram_gb: 2.5
+    recommended_for: ["planner", "reviewer", "researcher"]
+
+  - name: "mistral:7b"
+    description: "Mistral 7B - 코딩/분석 우수"
+    vram_gb: 4.5
+    recommended_for: ["coder", "reviewer"]
+
+  - name: "codellama:7b"
+    description: "Code Llama 7B - 코딩 특화"
+    vram_gb: 4.5
+    recommended_for: ["coder", "tester"]
+
+  - name: "qwen2.5-coder:7b"
+    description: "Qwen 2.5 Coder 7B - 최신 코딩 모델"
+    vram_gb: 5.0
+    recommended_for: ["coder", "tester"]
+
+  - name: "deepseek-coder-v2:16b"
+    description: "DeepSeek Coder V2 16B - 대형 코딩 모델"
+    vram_gb: 10.0
+    recommended_for: ["coder"]
+    note: "12GB VRAM에서 동작하지만 여유 없음"
+
+  # 비전 모델
+  - name: "llava:13b"
+    description: "LLaVA 13B - 이미지 분석"
+    vram_gb: 8.5
+    recommended_for: ["vision"]
+
+  - name: "llava:7b"
+    description: "LLaVA 7B - 경량 이미지 분석"
+    vram_gb: 5.0
+    recommended_for: ["vision"]
+
+  - name: "moondream:latest"
+    description: "Moondream - 초경량 비전 모델"
+    vram_gb: 2.0
+    recommended_for: ["vision"]
+    note: "VRAM이 부족할 때 사용"
+
+  # 한국어 지원 모델
+  - name: "EEVE-Korean-10.8B:latest"
+    description: "EEVE Korean 10.8B - 한국어 특화"
+    vram_gb: 7.5
+    recommended_for: ["manager", "researcher"]
+
+# HuggingFace 권장 모델
+huggingface_models:
+  - model_id: "mistralai/Mistral-7B-Instruct-v0.2"
+    description: "Mistral 7B Instruct - 범용"
+    vram_gb_4bit: 4.5
+    vram_gb_8bit: 7.0
+
+  - model_id: "codellama/CodeLlama-7b-Instruct-hf"
+    description: "Code Llama 7B - 코딩 특화"
+    vram_gb_4bit: 4.5
+    vram_gb_8bit: 7.0
+
+  - model_id: "Qwen/Qwen2.5-7B-Instruct"
+    description: "Qwen 2.5 7B - 다국어, 코딩 우수"
+    vram_gb_4bit: 4.5
+    vram_gb_8bit: 7.0
+
+# 다중 모델 전략 (12GB VRAM 제약 하)
+strategies:
+  single_model:
+    description: "단일 모델 - 모든 에이전트가 같은 모델 사용"
+    model: "llama3.1:8b"
+
+  two_tier:
+    description: "2단계 - 빠른/강력 모델 분리"
+    fast_model: "llama3.2:3b"     # 플래너, 리뷰어, 연구자
+    powerful_model: "llama3.1:8b" # 코더, 매니저, 테스터
+
+  coding_focus:
+    description: "코딩 중심 - 코딩 특화 모델 사용"
+    default_model: "llama3.1:8b"
+    coder_model: "qwen2.5-coder:7b"
+
+  vision_enabled:
+    description: "비전 포함 - 이미지 분석 지원"
+    default_model: "llama3.1:8b"
+    vision_model: "llava:7b"
+    note: "두 모델 동시 로드 시 ~11GB VRAM 필요"
