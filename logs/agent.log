@@ -1004,3 +1004,609 @@
 {"timestamp": "2026-04-09T12:19:28.791888+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
 {"timestamp": "2026-04-09T12:19:28.792123+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
 {"timestamp": "2026-04-09T12:19:28.792255+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:11.830950+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/quick_7w5v744t"}
+{"timestamp": "2026-04-09T12:50:11.833475+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:11.833522+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:11.834517+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: quick_7w5v744t (attached_quick_7w5v744t)"}
+{"timestamp": "2026-04-09T12:50:11.835032+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:11.835571+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:11.865376+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git status --short --branch"}
+{"timestamp": "2026-04-09T12:50:11.889224+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:50:12.038997+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 2개 청크, 총 2개, 파일 2개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:12.045250+00:00", "level": "INFO", "logger": "tools.document", "message": "프레젠테이션 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_document_tool_creates_ppt0/out/demo.pptx"}
+{"timestamp": "2026-04-09T12:50:12.046007+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_workspace_manager_attache0/existing-project"}
+{"timestamp": "2026-04-09T12:50:12.047247+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: existing-project (attached_existing_project)"}
+{"timestamp": "2026-04-09T12:50:12.047656+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_workspace_manager_attache0/existing-project/.lta/artifacts/note.txt"}
+{"timestamp": "2026-04-09T12:50:12.048161+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_workspace_manager_attache0/existing-project/src/app.py"}
+{"timestamp": "2026-04-09T12:50:12.052746+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_create_engine_supports_at0/repo"}
+{"timestamp": "2026-04-09T12:50:12.098409+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:12.098459+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:12.108585+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_engine_saves_generic_code0/repo"}
+{"timestamp": "2026-04-09T12:50:12.116969+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:12.117039+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:12.118180+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: repo (attached_repo)"}
+{"timestamp": "2026-04-09T12:50:12.118675+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_engine_saves_generic_code0/repo/generated/5220183e_generated_code.py"}
+{"timestamp": "2026-04-09T12:50:12.118826+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "Saved 1 artifacts"}
+{"timestamp": "2026-04-09T12:50:12.123346+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_engine_rejects_blueprint_0/repo"}
+{"timestamp": "2026-04-09T12:50:12.128510+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:12.128566+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:12.133047+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_save_artifacts_skips_fail0/repo"}
+{"timestamp": "2026-04-09T12:50:12.138075+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:12.138116+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:12.139114+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: repo (attached_repo)"}
+{"timestamp": "2026-04-09T12:50:12.139178+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "Saved 0 artifacts"}
+{"timestamp": "2026-04-09T12:50:16.177518+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_engine_creation0"}
+{"timestamp": "2026-04-09T12:50:16.187968+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:16.198580+00:00", "level": "INFO", "logger": "tools.document", "message": "문서 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_generate_report0/report.md"}
+{"timestamp": "2026-04-09T12:50:16.199417+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_create_project0"}
+{"timestamp": "2026-04-09T12:50:16.200987+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 테스트 프로젝트 (테스트_프로젝트_20260409_215016)"}
+{"timestamp": "2026-04-09T12:50:16.201784+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_list_projects0"}
+{"timestamp": "2026-04-09T12:50:16.203090+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 프로젝트 1 (프로젝트_1_20260409_215016)"}
+{"timestamp": "2026-04-09T12:50:16.204342+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 프로젝트 2 (프로젝트_2_20260409_215016)"}
+{"timestamp": "2026-04-09T12:50:16.205488+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_save_artifact0"}
+{"timestamp": "2026-04-09T12:50:16.206747+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 테스트 (테스트_20260409_215016)"}
+{"timestamp": "2026-04-09T12:50:16.207090+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_save_artifact0/테스트_20260409_215016/artifacts/test.py"}
+{"timestamp": "2026-04-09T12:50:16.207931+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_record_and_get_task0"}
+{"timestamp": "2026-04-09T12:50:16.209256+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 테스트 (테스트_20260409_215016)"}
+{"timestamp": "2026-04-09T12:50:16.211621+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 2개 청크, 총 2개, 파일 2개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:16.212380+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:50:16.213148+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: echo hello"}
+{"timestamp": "2026-04-09T12:50:16.221286+00:00", "level": "WARNING", "logger": "tools.shell", "message": "보안 차단: rm -rf /"}
+{"timestamp": "2026-04-09T12:50:16.221979+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: /Users/junseokshim/.pyenv/versions/3.11.8/bin/python --version"}
+{"timestamp": "2026-04-09T12:50:17.101465+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:50:17.101974+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:50:17.102019+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:50:17.102318+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:50:17.102358+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:50:17.103111+00:00", "level": "WARNING", "logger": "backend.device", "message": "MPS를 요청했지만 사용할 수 없습니다. CPU로 폴백합니다."}
+{"timestamp": "2026-04-09T12:50:17.104329+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:50:17.104374+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:50:17.104684+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:50:17.105139+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:50:17.141386+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/cli_status_3_f3_546"}
+{"timestamp": "2026-04-09T12:50:17.142566+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: repo (attached_cli_status_3_f3_546)"}
+{"timestamp": "2026-04-09T12:50:17.143358+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/cli_status_3_f3_546"}
+{"timestamp": "2026-04-09T12:50:17.168580+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/cli_export_n9jb1gme"}
+{"timestamp": "2026-04-09T12:50:17.169631+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: repo (attached_cli_export_n9jb1gme)"}
+{"timestamp": "2026-04-09T12:50:17.169997+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/cli_export_n9jb1gme/exports/chat.md"}
+{"timestamp": "2026-04-09T12:50:17.174536+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.179341+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.183114+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.185965+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.189613+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.192339+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.196855+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.199516+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.203132+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.206681+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.210254+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.212758+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.216579+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.218920+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.222505+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.224847+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.228495+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.231328+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.234912+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.237232+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.240848+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.243187+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.246802+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.249496+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.253703+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_blueprint_run_is_failed0"}
+{"timestamp": "2026-04-09T12:50:17.255319+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.255353+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.256296+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_blueprint_run_is_failed0 (attached_test_blueprint_run_is_failed0)"}
+{"timestamp": "2026-04-09T12:50:17.256330+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_blueprint_run_is_failed0"}
+{"timestamp": "2026-04-09T12:50:17.257003+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.257031+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.257186+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.269665+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.270388+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.279959+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.280164+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:50:17.281031+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.281148+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:50:17.281202+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:50:17.281676+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.282019+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:50:17.283075+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:17.283109+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:50:17.283377+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:50:17.283477+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:50:17.283651+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:50:17.284810+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.284982+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.289638+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_blueprint_run_has_no_proj0"}
+{"timestamp": "2026-04-09T12:50:17.291245+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.291280+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.292407+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_blueprint_run_has_no_proj0 (attached_test_blueprint_run_has_no_proj0)"}
+{"timestamp": "2026-04-09T12:50:17.292440+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_blueprint_run_has_no_proj0"}
+{"timestamp": "2026-04-09T12:50:17.293119+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.293148+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.293294+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.303979+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.304713+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.314500+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.314664+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:50:17.315316+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.315384+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:50:17.315432+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:50:17.316208+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.316575+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:50:17.317520+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:17.317562+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:50:17.317776+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:50:17.317860+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:50:17.317959+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:50:17.318190+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.318329+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.323193+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_blueprint_run_final_outpu0"}
+{"timestamp": "2026-04-09T12:50:17.325026+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.325059+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.326014+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_blueprint_run_final_outpu0 (attached_test_blueprint_run_final_outpu0)"}
+{"timestamp": "2026-04-09T12:50:17.326047+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_blueprint_run_final_outpu0"}
+{"timestamp": "2026-04-09T12:50:17.326732+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.326760+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.326909+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.337122+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.337872+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.347952+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.348154+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:50:17.348774+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.348848+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:50:17.348898+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:50:17.349293+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.349690+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:50:17.350704+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:17.350740+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:50:17.350966+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:50:17.351060+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:50:17.351167+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:50:17.351404+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.351539+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.356378+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_blueprint_dot_lta_artifac0"}
+{"timestamp": "2026-04-09T12:50:17.357973+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.358011+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.358809+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_blueprint_dot_lta_artifac0 (attached_test_blueprint_dot_lta_artifac0)"}
+{"timestamp": "2026-04-09T12:50:17.358850+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_blueprint_dot_lta_artifac0"}
+{"timestamp": "2026-04-09T12:50:17.359522+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.359552+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.359707+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.370661+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.371394+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.381012+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.381179+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:50:17.382779+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.382880+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:50:17.382932+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:50:17.383936+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.384298+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:50:17.385311+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:17.385343+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:50:17.385570+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:50:17.385664+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:50:17.385762+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:50:17.386011+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.386171+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.391126+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_run_is_complete0"}
+{"timestamp": "2026-04-09T12:50:17.393041+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.393084+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.393876+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_real_code_run_is_complete0 (attached_test_real_code_run_is_complete0)"}
+{"timestamp": "2026-04-09T12:50:17.393909+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_real_code_run_is_complete0"}
+{"timestamp": "2026-04-09T12:50:17.394600+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.394630+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.394791+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.405370+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.406077+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.415853+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.416011+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:50:17.416943+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.417032+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:50:17.417087+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:50:17.417475+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.417822+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:50:17.418781+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:17.418815+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:50:17.419031+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:50:17.419125+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:50:17.419423+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[reviewer] 단계 3: 검토 [reviewer]"}
+{"timestamp": "2026-04-09T12:50:17.419505+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[reviewer] 리뷰어가 코드를 점검 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.419612+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[document] 문서 에이전트가 문서를 작성 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.419991+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_run_is_complete0/main.py"}
+{"timestamp": "2026-04-09T12:50:17.420288+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_run_is_complete0/README.md"}
+{"timestamp": "2026-04-09T12:50:17.420373+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "Saved 2 artifacts"}
+{"timestamp": "2026-04-09T12:50:17.420488+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: /Users/junseokshim/.pyenv/versions/3.11.8/bin/python -m py_compile main.py"}
+{"timestamp": "2026-04-09T12:50:17.441550+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 결과를 통합 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.441971+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_run_is_complete0/.lta/reports/final_output.md"}
+{"timestamp": "2026-04-09T12:50:17.442229+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_run_is_complete0/.lta/logs/run_20260409_215017.log"}
+{"timestamp": "2026-04-09T12:50:17.442267+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[system] 작업 완료 (0.0초)"}
+{"timestamp": "2026-04-09T12:50:17.447073+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_creates_visible0"}
+{"timestamp": "2026-04-09T12:50:17.451453+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.451488+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.453550+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_real_code_creates_visible0 (attached_test_real_code_creates_visible0)"}
+{"timestamp": "2026-04-09T12:50:17.453597+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_real_code_creates_visible0"}
+{"timestamp": "2026-04-09T12:50:17.454823+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.454854+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.455076+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.466560+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.467274+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.477087+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.477254+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:50:17.477859+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.477935+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:50:17.478000+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:50:17.478442+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.478783+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:50:17.479734+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:17.479767+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:50:17.479980+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:50:17.480059+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:50:17.480162+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[reviewer] 단계 3: 검토 [reviewer]"}
+{"timestamp": "2026-04-09T12:50:17.480224+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[reviewer] 리뷰어가 코드를 점검 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.480294+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[document] 문서 에이전트가 문서를 작성 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.480734+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_creates_visible0/main.py"}
+{"timestamp": "2026-04-09T12:50:17.481026+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_creates_visible0/README.md"}
+{"timestamp": "2026-04-09T12:50:17.481108+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "Saved 2 artifacts"}
+{"timestamp": "2026-04-09T12:50:17.481226+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: /Users/junseokshim/.pyenv/versions/3.11.8/bin/python -m py_compile main.py"}
+{"timestamp": "2026-04-09T12:50:17.501242+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 결과를 통합 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.501643+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_creates_visible0/.lta/reports/final_output.md"}
+{"timestamp": "2026-04-09T12:50:17.501893+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_real_code_creates_visible0/.lta/logs/run_20260409_215017.log"}
+{"timestamp": "2026-04-09T12:50:17.501931+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[system] 작업 완료 (0.1초)"}
+{"timestamp": "2026-04-09T12:50:17.506662+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.511178+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.514792+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.517452+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.521046+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:50:17.523383+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.527578+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_file_tree_only_is_not_com0"}
+{"timestamp": "2026-04-09T12:50:17.529163+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.529196+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.529954+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_file_tree_only_is_not_com0 (attached_test_file_tree_only_is_not_com0)"}
+{"timestamp": "2026-04-09T12:50:17.529986+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_file_tree_only_is_not_com0"}
+{"timestamp": "2026-04-09T12:50:17.530647+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.530675+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.530823+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.542707+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.543467+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.554153+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.554317+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:50:17.554918+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.554984+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:50:17.555037+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:50:17.555399+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.555751+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:50:17.556735+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:17.556776+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:50:17.557010+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:50:17.557093+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:50:17.557191+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:50:17.557414+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.557549+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.562442+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-9/test_no_generated_code_py_in_l0"}
+{"timestamp": "2026-04-09T12:50:17.564065+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.564099+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:50:17.564862+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_no_generated_code_py_in_l0 (attached_test_no_generated_code_py_in_l0)"}
+{"timestamp": "2026-04-09T12:50:17.564894+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_no_generated_code_py_in_l0"}
+{"timestamp": "2026-04-09T12:50:17.565604+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:50:17.565634+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.565794+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.576697+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.577540+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.588781+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:50:17.588965+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:50:17.589607+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.589712+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:50:17.589775+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:50:17.590275+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:50:17.590616+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:50:17.591569+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:50:17.591599+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:50:17.591814+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:50:17.591892+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:50:17.591986+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:50:17.592206+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:50:17.592344+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:34.430768+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/quick_etxcovhx"}
+{"timestamp": "2026-04-09T12:59:34.432487+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:34.432534+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:34.433516+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: quick_etxcovhx (attached_quick_etxcovhx)"}
+{"timestamp": "2026-04-09T12:59:34.434109+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:34.434707+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:34.469391+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git status --short --branch"}
+{"timestamp": "2026-04-09T12:59:34.489603+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:59:34.535470+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 2개 청크, 총 2개, 파일 2개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:34.539545+00:00", "level": "INFO", "logger": "tools.document", "message": "프레젠테이션 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_document_tool_creates_ppt0/out/demo.pptx"}
+{"timestamp": "2026-04-09T12:59:34.540308+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_workspace_manager_attache0/existing-project"}
+{"timestamp": "2026-04-09T12:59:34.541404+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: existing-project (attached_existing_project)"}
+{"timestamp": "2026-04-09T12:59:34.541724+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_workspace_manager_attache0/existing-project/.lta/artifacts/note.txt"}
+{"timestamp": "2026-04-09T12:59:34.542096+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_workspace_manager_attache0/existing-project/src/app.py"}
+{"timestamp": "2026-04-09T12:59:34.546674+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_create_engine_supports_at0/repo"}
+{"timestamp": "2026-04-09T12:59:34.586159+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:34.586202+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:34.590675+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_engine_saves_generic_code0/repo"}
+{"timestamp": "2026-04-09T12:59:34.595825+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:34.595882+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:34.596868+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: repo (attached_repo)"}
+{"timestamp": "2026-04-09T12:59:34.597724+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_engine_saves_generic_code0/repo/generated/7d99ef4f_generated_code.py"}
+{"timestamp": "2026-04-09T12:59:34.598036+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "Saved 1 artifacts"}
+{"timestamp": "2026-04-09T12:59:34.609037+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_engine_rejects_blueprint_0/repo"}
+{"timestamp": "2026-04-09T12:59:34.616235+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:34.616281+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:34.620762+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_save_artifacts_skips_fail0/repo"}
+{"timestamp": "2026-04-09T12:59:34.625427+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:34.625465+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:34.626349+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: repo (attached_repo)"}
+{"timestamp": "2026-04-09T12:59:34.626419+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "Saved 0 artifacts"}
+{"timestamp": "2026-04-09T12:59:38.656880+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_engine_creation0"}
+{"timestamp": "2026-04-09T12:59:38.668694+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:38.677977+00:00", "level": "INFO", "logger": "tools.document", "message": "문서 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_generate_report0/report.md"}
+{"timestamp": "2026-04-09T12:59:38.678786+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_create_project0"}
+{"timestamp": "2026-04-09T12:59:38.680120+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 테스트 프로젝트 (테스트_프로젝트_20260409_215938)"}
+{"timestamp": "2026-04-09T12:59:38.680887+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_list_projects0"}
+{"timestamp": "2026-04-09T12:59:38.682317+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 프로젝트 1 (프로젝트_1_20260409_215938)"}
+{"timestamp": "2026-04-09T12:59:38.683632+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 프로젝트 2 (프로젝트_2_20260409_215938)"}
+{"timestamp": "2026-04-09T12:59:38.684527+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_save_artifact0"}
+{"timestamp": "2026-04-09T12:59:38.685710+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 테스트 (테스트_20260409_215938)"}
+{"timestamp": "2026-04-09T12:59:38.686031+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_save_artifact0/테스트_20260409_215938/artifacts/test.py"}
+{"timestamp": "2026-04-09T12:59:38.686793+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_record_and_get_task0"}
+{"timestamp": "2026-04-09T12:59:38.687789+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 생성: 테스트 (테스트_20260409_215938)"}
+{"timestamp": "2026-04-09T12:59:38.690057+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 2개 청크, 총 2개, 파일 2개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:38.690786+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:59:38.691523+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: echo hello"}
+{"timestamp": "2026-04-09T12:59:38.697329+00:00", "level": "WARNING", "logger": "tools.shell", "message": "보안 차단: rm -rf /"}
+{"timestamp": "2026-04-09T12:59:38.697998+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: /Users/junseokshim/.pyenv/versions/3.11.8/bin/python --version"}
+{"timestamp": "2026-04-09T12:59:39.247964+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:59:39.248508+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:59:39.248554+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:59:39.248843+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:59:39.248881+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:59:39.249667+00:00", "level": "WARNING", "logger": "backend.device", "message": "MPS를 요청했지만 사용할 수 없습니다. CPU로 폴백합니다."}
+{"timestamp": "2026-04-09T12:59:39.250844+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:59:39.250885+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:59:39.251191+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:59:39.251457+00:00", "level": "INFO", "logger": "backend.device", "message": "선택된 디바이스: mps"}
+{"timestamp": "2026-04-09T12:59:39.286345+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/cli_status_ugjqbxvs"}
+{"timestamp": "2026-04-09T12:59:39.287352+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: repo (attached_cli_status_ugjqbxvs)"}
+{"timestamp": "2026-04-09T12:59:39.288004+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/cli_status_ugjqbxvs"}
+{"timestamp": "2026-04-09T12:59:39.314666+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/cli_export_zh11g06z"}
+{"timestamp": "2026-04-09T12:59:39.315714+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: repo (attached_cli_export_zh11g06z)"}
+{"timestamp": "2026-04-09T12:59:39.316150+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /Users/junseokshim/Desktop/lta_2/.codex_pytest_tmp/cli_export_zh11g06z/exports/chat.md"}
+{"timestamp": "2026-04-09T12:59:39.321525+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.325706+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.329646+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.332353+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.336031+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.339625+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.343266+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.345437+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.349092+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.351441+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.355087+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.357374+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.360904+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.363088+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.366762+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.368941+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.372535+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.375188+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.378847+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.381426+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.385126+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.387501+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.391032+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.393243+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.397381+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_blueprint_run_is_failed0"}
+{"timestamp": "2026-04-09T12:59:39.398989+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.399026+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.399856+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_blueprint_run_is_failed0 (attached_test_blueprint_run_is_failed0)"}
+{"timestamp": "2026-04-09T12:59:39.399893+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_blueprint_run_is_failed0"}
+{"timestamp": "2026-04-09T12:59:39.400579+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.400608+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.400782+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.412802+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.413556+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.425145+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.425364+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:59:39.426016+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.426117+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:59:39.426172+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:59:39.426608+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.426969+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:59:39.427918+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:39.427950+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:59:39.428173+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:59:39.428271+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:59:39.428431+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:59:39.430040+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.430200+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.435015+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_blueprint_run_has_no_proj0"}
+{"timestamp": "2026-04-09T12:59:39.436676+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.436709+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.437454+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_blueprint_run_has_no_proj0 (attached_test_blueprint_run_has_no_proj0)"}
+{"timestamp": "2026-04-09T12:59:39.437488+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_blueprint_run_has_no_proj0"}
+{"timestamp": "2026-04-09T12:59:39.438176+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.438204+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.438364+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.449228+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.449980+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.459863+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.460032+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:59:39.460671+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.460752+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:59:39.460802+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:59:39.461247+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.461590+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:59:39.462554+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:39.462586+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:59:39.462804+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:59:39.462893+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:59:39.462991+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:59:39.463218+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.463363+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.468245+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_blueprint_run_final_outpu0"}
+{"timestamp": "2026-04-09T12:59:39.469876+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.469912+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.470665+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_blueprint_run_final_outpu0 (attached_test_blueprint_run_final_outpu0)"}
+{"timestamp": "2026-04-09T12:59:39.470701+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_blueprint_run_final_outpu0"}
+{"timestamp": "2026-04-09T12:59:39.471421+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.471451+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.471610+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.481726+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.482430+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.492104+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.492273+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:59:39.493482+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.493570+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:59:39.493621+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:59:39.494049+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.494392+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:59:39.495350+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:39.495382+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:59:39.495596+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:59:39.495684+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:59:39.495785+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:59:39.496013+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.496150+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.500881+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_blueprint_dot_lta_artifac0"}
+{"timestamp": "2026-04-09T12:59:39.502493+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.502531+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.503272+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_blueprint_dot_lta_artifac0 (attached_test_blueprint_dot_lta_artifac0)"}
+{"timestamp": "2026-04-09T12:59:39.503304+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_blueprint_dot_lta_artifac0"}
+{"timestamp": "2026-04-09T12:59:39.503996+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.504026+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.504172+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.514362+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.515042+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.524844+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.525012+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:59:39.525625+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.525696+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:59:39.525746+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:59:39.526128+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.526463+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:59:39.527427+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:39.527457+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:59:39.527672+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:59:39.527757+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:59:39.527856+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:59:39.528084+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.528226+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.533023+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_run_is_complete0"}
+{"timestamp": "2026-04-09T12:59:39.534658+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.534705+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.535562+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_real_code_run_is_complete0 (attached_test_real_code_run_is_complete0)"}
+{"timestamp": "2026-04-09T12:59:39.535606+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_real_code_run_is_complete0"}
+{"timestamp": "2026-04-09T12:59:39.536317+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.536347+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.536513+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.547387+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.548096+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.558154+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.558315+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:59:39.558907+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.558989+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:59:39.559040+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:59:39.559485+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.559822+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:59:39.560786+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:39.560818+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:59:39.561037+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:59:39.561131+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:59:39.561466+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[reviewer] 단계 3: 검토 [reviewer]"}
+{"timestamp": "2026-04-09T12:59:39.561542+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[reviewer] 리뷰어가 코드를 점검 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.561670+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[document] 문서 에이전트가 문서를 작성 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.562072+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_run_is_complete0/main.py"}
+{"timestamp": "2026-04-09T12:59:39.562383+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_run_is_complete0/README.md"}
+{"timestamp": "2026-04-09T12:59:39.562490+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "Saved 2 artifacts"}
+{"timestamp": "2026-04-09T12:59:39.562613+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: /Users/junseokshim/.pyenv/versions/3.11.8/bin/python -m py_compile main.py"}
+{"timestamp": "2026-04-09T12:59:39.584698+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 결과를 통합 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.585160+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_run_is_complete0/.lta/reports/final_output.md"}
+{"timestamp": "2026-04-09T12:59:39.585423+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_run_is_complete0/.lta/logs/run_20260409_215939.log"}
+{"timestamp": "2026-04-09T12:59:39.585463+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[system] 작업 완료 (0.1초)"}
+{"timestamp": "2026-04-09T12:59:39.590496+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_creates_visible0"}
+{"timestamp": "2026-04-09T12:59:39.592199+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.592233+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.592987+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_real_code_creates_visible0 (attached_test_real_code_creates_visible0)"}
+{"timestamp": "2026-04-09T12:59:39.593019+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_real_code_creates_visible0"}
+{"timestamp": "2026-04-09T12:59:39.593732+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.593776+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.593958+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.605038+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.605731+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.615579+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.615748+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:59:39.616357+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.616434+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:59:39.616484+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:59:39.617030+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.617380+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:59:39.618341+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:39.618372+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:59:39.618588+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:59:39.618669+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:59:39.618776+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[reviewer] 단계 3: 검토 [reviewer]"}
+{"timestamp": "2026-04-09T12:59:39.618834+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[reviewer] 리뷰어가 코드를 점검 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.618903+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[document] 문서 에이전트가 문서를 작성 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.619254+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_creates_visible0/main.py"}
+{"timestamp": "2026-04-09T12:59:39.619537+00:00", "level": "INFO", "logger": "workspace.manager", "message": "프로젝트 파일 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_creates_visible0/README.md"}
+{"timestamp": "2026-04-09T12:59:39.619620+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "Saved 2 artifacts"}
+{"timestamp": "2026-04-09T12:59:39.619739+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: /Users/junseokshim/.pyenv/versions/3.11.8/bin/python -m py_compile main.py"}
+{"timestamp": "2026-04-09T12:59:39.641148+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 결과를 통합 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.641773+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_creates_visible0/.lta/reports/final_output.md"}
+{"timestamp": "2026-04-09T12:59:39.642131+00:00", "level": "INFO", "logger": "workspace.manager", "message": "산출물 저장: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_real_code_creates_visible0/.lta/logs/run_20260409_215939.log"}
+{"timestamp": "2026-04-09T12:59:39.642181+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[system] 작업 완료 (0.0초)"}
+{"timestamp": "2026-04-09T12:59:39.646781+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.650454+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.654029+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.657180+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.660807+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Managed workspace 초기화: /private/tmp"}
+{"timestamp": "2026-04-09T12:59:39.663307+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.667464+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_file_tree_only_is_not_com0"}
+{"timestamp": "2026-04-09T12:59:39.669648+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.669682+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.670480+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_file_tree_only_is_not_com0 (attached_test_file_tree_only_is_not_com0)"}
+{"timestamp": "2026-04-09T12:59:39.670514+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_file_tree_only_is_not_com0"}
+{"timestamp": "2026-04-09T12:59:39.671188+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.671216+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.671367+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.682672+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.683394+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.692917+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.693080+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:59:39.693699+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.693781+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:59:39.693835+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:59:39.695849+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.696211+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:59:39.697176+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:39.697207+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:59:39.697427+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:59:39.697504+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:59:39.697600+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:59:39.697830+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.697974+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.702709+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached workspace 초기화: /private/var/folders/j1/l91_nhvj6jddv1qmvcx7cfkc0000gn/T/pytest-of-junseokshim/pytest-10/test_no_generated_code_py_in_l0"}
+{"timestamp": "2026-04-09T12:59:39.704425+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.704458+00:00", "level": "INFO", "logger": "setup", "message": "오케스트레이션 엔진 초기화 완료"}
+{"timestamp": "2026-04-09T12:59:39.705763+00:00", "level": "INFO", "logger": "workspace.manager", "message": "Attached project 준비 완료: test_no_generated_code_py_in_l0 (attached_test_no_generated_code_py_in_l0)"}
+{"timestamp": "2026-04-09T12:59:39.705795+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[info] 프로젝트 생성: test_no_generated_code_py_in_l0"}
+{"timestamp": "2026-04-09T12:59:39.706469+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "검색 인덱스 초기화"}
+{"timestamp": "2026-04-09T12:59:39.706497+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 매니저가 작업을 분석 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.706640+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.717113+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.717824+00:00", "level": "INFO", "logger": "tools.shell", "message": "명령 실행: git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.728940+00:00", "level": "WARNING", "logger": "tools.shell", "message": "명령 실패 (코드 128): git rev-parse --is-inside-work-tree"}
+{"timestamp": "2026-04-09T12:59:39.729139+00:00", "level": "WARNING", "logger": "agent.Manager", "message": "태스크 분석 JSON 파싱 실패, 기본값 사용", "agent_name": "Manager"}
+{"timestamp": "2026-04-09T12:59:39.729812+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 플래너가 실행 계획을 수립 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.729882+00:00", "level": "WARNING", "logger": "agent.Planner", "message": "계획 JSON 파싱 실패, 기본 계획 생성", "agent_name": "Planner"}
+{"timestamp": "2026-04-09T12:59:39.729933+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[planner] 계획 수립 완료: 3단계"}
+{"timestamp": "2026-04-09T12:59:39.730980+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 리서처가 관련 맥락을 수집 중입니다..."}
+{"timestamp": "2026-04-09T12:59:39.731366+00:00", "level": "INFO", "logger": "agent.Researcher", "message": "로컬 검색 인덱스를 초기화합니다...", "agent_name": "Researcher"}
+{"timestamp": "2026-04-09T12:59:39.732292+00:00", "level": "INFO", "logger": "memory.retrieval", "message": "인덱싱 완료: 0개 청크, 총 0개, 파일 0개, 대형 파일 스킵 0개, 제한 스킵 0개"}
+{"timestamp": "2026-04-09T12:59:39.732325+00:00", "level": "WARNING", "logger": "memory.retrieval", "message": "인덱싱된 문서가 없습니다."}
+{"timestamp": "2026-04-09T12:59:39.732537+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[researcher] 단계 1: 요구사항 분석 [researcher]"}
+{"timestamp": "2026-04-09T12:59:39.732617+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[coder] 단계 2: 구현 [coder]"}
+{"timestamp": "2026-04-09T12:59:39.732715+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[manager] 단계 2 실패, 재시도합니다..."}
+{"timestamp": "2026-04-09T12:59:39.732952+00:00", "level": "ERROR", "logger": "orchestration.engine", "message": "Orchestration error: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다.", "exception": "Traceback (most recent call last):\n  File \"/Users/junseokshim/Desktop/lta_2/src/orchestration/engine.py\", line 307, in run\n    raise RuntimeError(\nRuntimeError: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
+{"timestamp": "2026-04-09T12:59:39.733084+00:00", "level": "INFO", "logger": "orchestration.engine", "message": "[error] 오류: 단계 2 실패 — 실제 구현 코드가 없습니다.\n원인: 코더가 실제 구현 대신 설계 문서/의사코드를 반환했습니다.\n코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. 재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."}
