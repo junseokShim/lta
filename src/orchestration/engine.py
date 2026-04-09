@@ -30,6 +30,7 @@ from ..agents.vision_agent import VisionAgent
 from ..logging_utils import get_logger
 from ..memory.task_history import TaskHistory, TaskRecord
 from ..workspace.manager import WorkspaceManager
+from ..retry_policy import RetryPolicy, STEP_RETRY_POLICY, classify_error
 
 
 logger = get_logger("orchestration.engine")
@@ -291,25 +292,12 @@ class OrchestrationEngine:
                 step_title = step.get("title", step.get("description", ""))
                 self._notify(f"단계 {step_num}: {step_title} [{agent_name}]", agent_name)
 
-                step_result = self._execute_step(state, step)
-                self._store_result(state, step_result)
-
-                if not step_result.success:
-                    self._notify(f"단계 {step_num} 실패, 재시도합니다...", "manager")
-                    retry_result = self._execute_step(
-                        state,
-                        step,
-                        retry_feedback=step_result.error or "이전 응답이 실행 가능한 산출물을 만들지 못했습니다.",
-                    )
-                    self._store_result(state, retry_result)
-                    if not retry_result.success:
-                        reason = retry_result.error or retry_result.content[:200]
-                        raise RuntimeError(
-                            f"단계 {step_num} 실패 — 실제 구현 코드가 없습니다.\n"
-                            f"원인: {reason}\n"
-                            "코더가 청사진/파일트리/의사코드만 반환했거나 코드 블록이 없습니다. "
-                            "재시도 후에도 실행 가능한 구현 파일을 생성하지 못해 실패로 처리합니다."
-                        )
+                # ──────────────────────────────────────────
+                # 스텝 재시도 루프 (Step Retry Loop)
+                # 일시적 실패는 STEP_RETRY_POLICY 에 따라 재시도합니다.
+                # 치명적 오류 또는 최대 시도 초과 시에만 전체 오케스트레이션을 중단합니다.
+                # ──────────────────────────────────────────
+                step_result = self._execute_step_with_retry(state, step, STEP_RETRY_POLICY)
 
             code_results = state.get_results_by_role(AgentRole.CODER)
             if code_results:
@@ -548,6 +536,87 @@ class OrchestrationEngine:
             artifacts=[doc],
             success=True,
         )
+
+    def _execute_step_with_retry(
+        self,
+        state: OrchestrationState,
+        step: dict,
+        policy: RetryPolicy = STEP_RETRY_POLICY,
+    ) -> AgentResult:
+        """
+        단일 오케스트레이션 스텝을 재시도 정책에 따라 실행합니다.
+
+        [재시도 정책]
+        - 스텝 실패 시 policy.max_attempts 까지 재시도
+        - 각 재시도마다 이전 실패 내용을 feedback 으로 전달
+        - 지수 백오프 + 지터로 대기 시간 계산 (타이트한 루프 방지)
+
+        [종료 조건]
+        - 성공 → 결과 상태에 저장 후 반환
+        - 치명적 오류 → RuntimeError 발생 (오케스트레이션 전체 실패)
+        - 최대 시도 초과 → RuntimeError 발생 (오케스트레이션 전체 실패)
+        """
+        import time as _time
+
+        step_num = step.get("step_num", "?")
+        attempt = 0
+        last_feedback = ""
+        last_result: Optional[AgentResult] = None
+        loop_start = _time.time()
+
+        while True:
+            attempt += 1
+
+            # 스텝 실행 (실패 피드백을 다음 시도에 전달)
+            step_result = self._execute_step(state, step, retry_feedback=last_feedback)
+            self._store_result(state, step_result)
+
+            if step_result.success:
+                # 성공 — 재시도 루프 종료
+                if attempt > 1:
+                    logger.info(
+                        "단계 %s: %d번째 시도에서 성공 (총 경과: %.1f초)",
+                        step_num, attempt, _time.time() - loop_start
+                    )
+                return step_result
+
+            # 실패 처리 — 오류 분류 및 재시도 여부 판단
+            last_result = step_result
+            last_feedback = step_result.error or step_result.content[:300] or "이전 응답이 실행 가능한 산출물을 만들지 못했습니다."
+            error_class = classify_error(last_feedback)
+            elapsed = _time.time() - loop_start
+
+            logger.warning(
+                "단계 %s 시도 %d 실패 [%s]: %s",
+                step_num, attempt, error_class, last_feedback[:200]
+            )
+
+            # 재시도 여부 판단
+            should, reason = policy.should_retry(attempt, error_class, elapsed)
+
+            if not should:
+                # 재시도 불가 — 치명적 오류 또는 최대 시도 초과
+                logger.error(
+                    "단계 %s 재시도 중단 — %s (총 %d회 시도)",
+                    step_num, reason, attempt
+                )
+                raise RuntimeError(
+                    f"단계 {step_num} 최종 실패 ({attempt}회 시도)\n"
+                    f"중단 이유: {reason}\n"
+                    f"마지막 오류: {last_feedback[:300]}"
+                )
+
+            # 대기 후 재시도
+            wait_time = policy.compute_wait(attempt - 1)
+            self._notify(
+                f"단계 {step_num} {attempt}번째 실패, {wait_time:.1f}초 후 재시도...",
+                "manager"
+            )
+            logger.info(
+                "단계 %s: %d번째 실패 후 %.1f초 대기 후 재시도 (원인: %s)",
+                step_num, attempt, wait_time, last_feedback[:100]
+            )
+            _time.sleep(wait_time)
 
     def _execute_step(
         self,

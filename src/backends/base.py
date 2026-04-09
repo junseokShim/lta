@@ -9,6 +9,14 @@ from dataclasses import dataclass, field
 from typing import Optional, Iterator, Any
 import time
 
+from ..retry_policy import (
+    RetryPolicy,
+    BACKEND_RETRY_POLICY,
+    classify_error,
+    FatalError,
+    RetryExhausted,
+)
+
 
 @dataclass
 class BackendConfig:
@@ -102,31 +110,99 @@ class LLMBackend(ABC):
         """사용 가능한 모델 목록 반환"""
         pass
 
-    def generate_with_retry(self, request: GenerateRequest) -> GenerateResponse:
+    def generate_with_retry(
+        self,
+        request: GenerateRequest,
+        policy: Optional[RetryPolicy] = None,
+    ) -> GenerateResponse:
         """
-        재시도 로직이 포함된 생성
-        네트워크 오류나 임시 장애 시 자동 재시도합니다.
-        """
-        last_error = ""
-        current_request = deepcopy(request)
+        재시도 정책이 적용된 LLM 생성 메서드.
 
-        for attempt in range(self.config.retry_attempts):
+        [재시도 정책]
+        - 기본값: BACKEND_RETRY_POLICY (3회 시도, 지수 백오프, 지터)
+        - policy 파라미터로 커스텀 정책 주입 가능
+        - config.retry_attempts 값이 있으면 policy.max_attempts 로 동기화
+
+        [회복 가능 vs 치명적 오류]
+        - 타임아웃, 서버 오류, 메모리 부족 등 → 재시도
+        - 모델 없음, 인증 실패, 잘못된 요청 → 즉시 실패
+
+        [종료 조건]
+        - 성공 응답 반환 → 루프 종료
+        - 최대 시도 횟수 초과 → 실패 응답 반환
+        - 치명적 오류 → 실패 응답 반환 (예외 불전파)
+        """
+        import logging
+        _logger = logging.getLogger("backend.retry")
+
+        # 정책 결정: 주입된 정책 > 기본 BACKEND_RETRY_POLICY, retry_attempts 동기화
+        if policy is None:
+            policy = RetryPolicy(
+                max_attempts=self.config.retry_attempts,  # 설정값 존중
+                base_interval=BACKEND_RETRY_POLICY.base_interval,
+                backoff_factor=BACKEND_RETRY_POLICY.backoff_factor,
+                max_interval=BACKEND_RETRY_POLICY.max_interval,
+                jitter=BACKEND_RETRY_POLICY.jitter,
+                fatal_stop=BACKEND_RETRY_POLICY.fatal_stop,
+            )
+
+        current_request = deepcopy(request)
+        last_error = ""
+        last_exception: Optional[Exception] = None
+        attempt = 0
+
+        import time as _time
+        loop_start = _time.time()
+
+        while True:
+            attempt += 1
+            _logger.debug("LLM 생성 시도 %d (model=%s)", attempt, current_request.model_override or self.config.model)
+
             try:
                 response = self.generate(current_request)
-                if response.success:
-                    return response
-                last_error = response.error
-            except Exception as e:
-                last_error = str(e)
-            if attempt < self.config.retry_attempts - 1:
-                current_request = self._prepare_retry_request(current_request, last_error, attempt)
-                # 지수 백오프: 1초, 2초, 4초...
-                time.sleep(2 ** attempt)
 
-        return GenerateResponse(
-            success=False,
-            error=f"최대 재시도 횟수 초과. 마지막 오류: {last_error}",
-        )
+                if response.success:
+                    # 성공 — 재시도 루프 종료
+                    if attempt > 1:
+                        _logger.info("LLM 생성 %d번째 시도에서 성공", attempt)
+                    return response
+
+                # 논리적 실패 (HTTP 200 이지만 success=False)
+                last_error = response.error or "알 수 없는 오류"
+                last_exception = None
+
+            except Exception as exc:
+                last_error = str(exc)
+                last_exception = exc
+
+            # 오류 분류 (치명적 vs 회복 가능)
+            error_class = classify_error(last_error)
+            _logger.warning(
+                "LLM 생성 시도 %d 실패 [%s]: %s",
+                attempt, error_class, last_error[:200]
+            )
+
+            # 재시도 여부 판단
+            elapsed = _time.time() - loop_start
+            should, reason = policy.should_retry(attempt, error_class, elapsed)
+
+            if not should:
+                _logger.error("LLM 생성 재시도 중단 — %s (총 %d회 시도)", reason, attempt)
+                return GenerateResponse(
+                    success=False,
+                    error=f"최대 재시도 횟수 초과 ({attempt}회 시도). 마지막 오류: {last_error}",
+                )
+
+            # 다음 시도 준비: 컨텍스트/토큰 크기 축소 등 적용
+            current_request = self._prepare_retry_request(current_request, last_error, attempt - 1)
+
+            # 지수 백오프 + 지터 대기 (타이트한 루프 방지)
+            wait_time = policy.compute_wait(attempt - 1)
+            _logger.info(
+                "LLM 생성 %d번째 실패 후 %.1f초 대기 후 재시도... (원인: %s)",
+                attempt, wait_time, last_error[:100]
+            )
+            _time.sleep(wait_time)
 
     def _prepare_retry_request(
         self,

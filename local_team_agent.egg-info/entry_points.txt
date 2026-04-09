@@ -1,0 +1,3 @@
+[console_scripts]
+local-team-agent = src.main:main
+lta = src.main:main
