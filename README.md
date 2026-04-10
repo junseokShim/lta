@@ -914,4 +914,4 @@ response = backend.generate_with_retry(request, policy=custom_policy)
 
 ## 라이선스
 
-현재 저장소에 별도 라이선스 파일이 없다면, 배포 전에 라이선스 정책을 명확히 정리하는 것을 권장합니다.
+MIT License
