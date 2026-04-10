@@ -849,6 +849,109 @@ venv\Scripts\python.exe -m src.main chat --help
 - git diff 기반 변경 요약 자동화
 - UI에서 chat history 복원/검색 기능 강화
 
+## 재시도(Retry) 전략
+
+### 이전 동작의 문제점
+
+변경 전에는 오케스트레이션 엔진이 스텝 실패에 매우 취약했습니다.
+
+- **스텝 실패 시**: 딱 1번만 재시도한 뒤, 두 번째도 실패하면 즉시 `RuntimeError`를 발생시켜 전체 실행을 FAILED 상태로 종료
+- **LLM 백엔드 실패 시**: `config.retry_attempts`(기본 3회) 시도 후 고정 `2**attempt`초 대기, 지터 없음, 치명적/일시적 오류 구분 없음
+- **결과**: 타임아웃·서버 과부하 등 일시적 오류 한 번만 발생해도 전체 작업이 즉시 중단
+
+### 현재 재시도 전략
+
+`src/retry_policy.py` 모듈을 중심으로 통합된 재시도 정책이 적용됩니다.
+
+#### 재시도 정책 파라미터
+
+| 파라미터 | 설명 | 기본값 (백엔드) | 기본값 (스텝) |
+|---|---|---|---|
+| `max_attempts` | 최대 시도 횟수. 0=무제한 | 3 | 5 |
+| `base_interval` | 첫 번째 재시도 대기 시간(초) | 1.0 | 2.0 |
+| `backoff_factor` | 지수 백오프 배율 | 2.0 | 2.0 |
+| `max_interval` | 최대 대기 시간 상한(초) | 30.0 | 60.0 |
+| `jitter` | ±25% 무작위 흔들림 | True | True |
+| `fatal_stop` | 치명적 오류 즉시 중단 | True | True |
+| `total_timeout` | 전체 루프 타임아웃(초) | None | None |
+
+#### 치명적 오류 처리
+
+아래 키워드가 포함된 오류는 **재시도 없이 즉시 중단**합니다.
+
+- `model not found` / 모델 없음
+- `authentication failed` / 인증 실패
+- `invalid api key`
+- `permission denied`
+- `invalid request`
+
+#### 회복 가능한 오류 처리
+
+아래 키워드가 포함된 오류는 **재시도** 대상으로 분류합니다.
+
+- `timeout` / 타임아웃
+- `500`, `502`, `503`, `504` 서버 오류
+- `out of memory`, `resource exhausted`
+- `connection` / 연결 오류
+- `rate limit`, `too many requests`
+
+#### 지수 백오프 공식
+
+```
+대기 시간 = min(base_interval * (backoff_factor ** attempt), max_interval)
+지터 적용: 대기 시간 * uniform(0.75, 1.25)
+최소 대기: 0.1초
+```
+
+### 재시도 동작 검증 방법
+
+```bash
+# 단위 테스트 실행 (LLM 없이 동작)
+venv/bin/python -m pytest tests/test_retry.py -v
+
+# 전체 테스트 실행
+venv/bin/python -m pytest tests/test_basic.py tests/test_retry.py -v
+```
+
+### 재시도 설정 커스터마이징
+
+환경 변수로 백엔드 재시도 횟수를 조절할 수 있습니다.
+
+```env
+BACKEND_RETRY_ATTEMPTS=5   # 기본 3
+BACKEND_TIMEOUT=180        # 기본 120초
+```
+
+또는 `config/default.yaml`에서:
+
+```yaml
+backend:
+  retry_attempts: 5
+  timeout: 180
+```
+
+코드에서 직접 정책을 주입하려면:
+
+```python
+from src.retry_policy import RetryPolicy
+
+custom_policy = RetryPolicy(
+    max_attempts=10,
+    base_interval=2.0,
+    backoff_factor=2.0,
+    max_interval=120.0,
+    jitter=True,
+    fatal_stop=True,
+)
+
+response = backend.generate_with_retry(request, policy=custom_policy)
+```
+
+### 알려진 제한 사항
+
+- 현재 `total_timeout` 기본값은 `None` (무제한)으로, 이론상 무한 루프 가능성 있음. 실무에서는 `total_timeout`을 명시적으로 설정하는 것을 권장합니다.
+- 오류 분류는 키워드 기반으로 동작하므로, 백엔드가 표준 오류 메시지를 반환하지 않으면 분류가 `unknown`으로 처리됩니다.
+
 ## 라이선스
 
 현재 저장소에 별도 라이선스 파일이 없다면, 배포 전에 라이선스 정책을 명확히 정리하는 것을 권장합니다.

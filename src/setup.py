@@ -290,7 +290,7 @@ def _create_backend(config: dict, backend_type: str):
         backend_config = BackendConfig(
             model=hf_cfg.get("model_id", "mistralai/Mistral-7B-Instruct-v0.2"),
             temperature=hf_cfg.get("temperature", 0.7),
-            max_tokens=hf_cfg.get("max_new_tokens", 2048),
+            max_tokens=hf_cfg.get("max_new_tokens", 4096),
             timeout=config.get("backend", {}).get("timeout", 120),
             retry_attempts=config.get("backend", {}).get("retry_attempts", 3),
             extra={

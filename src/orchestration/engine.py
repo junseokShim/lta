@@ -153,6 +153,113 @@ class OrchestrationEngine:
             parts.append(f"### {key}\n{str(value)[:1500]}")
         return "\n\n".join(parts)
 
+    def _list_visible_project_files(self, project_root: Path, limit: int = 200) -> list[str]:
+        """List user-facing project files while skipping workspace metadata folders."""
+        skip_dirs = {
+            ".git",
+            ".lta",
+            "__pycache__",
+            ".pytest_cache",
+            "artifacts",
+            "logs",
+            "reports",
+            "cache",
+            "inputs",
+            "venv",
+        }
+        skip_names = {".project.json", ".history.db"}
+
+        files: list[str] = []
+        for path in sorted(project_root.rglob("*")):
+            if not path.is_file():
+                continue
+            relative = path.relative_to(project_root)
+            if any(part in skip_dirs for part in relative.parts):
+                continue
+            if path.name in skip_names:
+                continue
+            files.append(relative.as_posix())
+            if len(files) >= limit:
+                break
+        return files
+
+    def _normalize_task_analysis(
+        self,
+        state: OrchestrationState,
+        user_task: str,
+        task_analysis: Optional[dict],
+    ) -> dict:
+        """Apply deterministic safeguards so project-generation validation is not left to the model alone."""
+        normalized = dict(task_analysis or {})
+        lowered = (user_task or "").lower()
+        initial_files = state.metadata.get("initial_visible_files") or []
+
+        create_keywords = [
+            "create",
+            "build",
+            "generate",
+            "make",
+            "new",
+            "scaffold",
+            "start",
+            "만들",
+            "생성",
+            "작성",
+            "구축",
+        ]
+        project_keywords = [
+            "project",
+            "app",
+            "application",
+            "api",
+            "cli",
+            "tool",
+            "script",
+            "service",
+            "package",
+            "program",
+            "프로젝트",
+            "앱",
+            "애플리케이션",
+            "도구",
+            "스크립트",
+            "서비스",
+            "패키지",
+        ]
+        python_keywords = ["python", "파이썬"]
+
+        looks_like_python = any(keyword in lowered for keyword in python_keywords)
+        looks_like_new_build = any(keyword in lowered for keyword in create_keywords) and any(
+            keyword in lowered for keyword in project_keywords
+        )
+        is_new_python_project = looks_like_python and (looks_like_new_build or not initial_files)
+
+        required_agents = list(normalized.get("required_agents") or [])
+        if is_new_python_project:
+            required_agents.extend(["planner", "coder", "reviewer", "tester", "document"])
+            normalized["task_type"] = "code"
+            normalized["needs_file_access"] = True
+            normalized["needs_code_execution"] = True
+
+        normalized["required_agents"] = sorted(set(required_agents))
+        normalized["project_generation"] = {
+            "is_new_project": is_new_python_project,
+            "language": "python" if is_new_python_project else normalized.get("project_generation", {}).get("language"),
+            "requires_entrypoint": is_new_python_project,
+            "initial_visible_file_count": len(initial_files),
+        }
+        return normalized
+
+    def _is_python_project_workflow(self, state: OrchestrationState) -> bool:
+        analysis = state.metadata.get("task_analysis") or {}
+        profile = analysis.get("project_generation") or {}
+        if profile.get("is_new_project") and profile.get("language") == "python":
+            return True
+
+        initial_files = state.metadata.get("initial_visible_files") or []
+        changed_files = self._collect_changed_files_from_artifacts(state)
+        return not initial_files and any(path.endswith(".py") for path in changed_files)
+
     def _store_result(self, state: OrchestrationState, result: AgentResult) -> None:
         """상태에 결과를 추가하고, 큰 본문은 디스크 캐시로 오프로드한다."""
         state.add_result(result)
@@ -236,6 +343,7 @@ class OrchestrationEngine:
             if bound_root:
                 state.metadata["project_root"] = str(bound_root)
                 state.metadata["workspace_mode"] = "attached" if self.workspace.is_attached_mode() else "managed"
+                state.metadata["initial_visible_files"] = self._list_visible_project_files(bound_root, limit=200)
 
         if additional_context:
             state.metadata["additional_context"] = additional_context
@@ -260,8 +368,11 @@ class OrchestrationEngine:
                 state.metadata["workspace_context"] = workspace_ctx
 
             task_analysis = self.manager.analyze_task(user_task, workspace_ctx)
+            task_analysis = self._normalize_task_analysis(state, user_task, task_analysis)
             state.metadata["task_analysis"] = task_analysis
             self._log_step(state, "task_analysis", str(task_analysis))
+
+            python_project_workflow = self._is_python_project_workflow(state)
 
             self._notify("플래너가 실행 계획을 수립 중입니다...", "planner")
             plan_context = {"task_analysis": str(task_analysis)}
@@ -306,19 +417,30 @@ class OrchestrationEngine:
                 self._store_result(state, review_result)
                 state.metadata["review"] = review_result.content
 
-            if self.tester and code_results and task_analysis.get("needs_code_execution"):
+            if self.tester and code_results and task_analysis.get("needs_code_execution") and not python_project_workflow:
                 self._notify("테스터가 테스트 코드를 작성 중입니다...", "tester")
                 self._store_result(state, self._run_tester(state, code_results))
 
-            if self.document_agent and task_analysis.get("task_type") in ["code", "mixed"]:
+            if self.document_agent and task_analysis.get("task_type") in ["code", "mixed"] and not python_project_workflow:
                 self._notify("문서 에이전트가 문서를 작성 중입니다...", "document")
                 self._store_result(state, self._run_document_agent(state, user_task, code_results))
 
             if self.workspace and state.project_id:
+                self._prepare_generated_project_artifacts(state)
                 self._save_artifacts(state)
-                verification_result = self._run_post_change_validation(state)
+                if python_project_workflow:
+                    verification_result = self._run_python_project_validation_loop(state)
+                else:
+                    verification_result = self._run_post_change_validation(state)
                 if verification_result:
                     self._store_result(state, verification_result)
+                self._enforce_completion_criteria(state)
+
+                if python_project_workflow and self.document_agent and task_analysis.get("task_type") in ["code", "mixed"]:
+                    self._notify("문서 에이전트가 실행 검증을 마친 뒤 README를 정리 중입니다...", "document")
+                    refreshed_code_results = state.get_results_by_role(AgentRole.CODER)
+                    self._store_result(state, self._run_document_agent(state, user_task, refreshed_code_results))
+                    self._save_artifacts(state)
 
             self._notify("매니저가 결과를 통합 중입니다...", "manager")
             state.final_output = self.manager.synthesize_results(
@@ -688,6 +810,20 @@ print("hello")
 """
         )
 
+        if self._is_python_project_workflow(state) and agent_name == "coder":
+            prompt_parts.append(
+                """
+This task is creating a brand-new runnable Python project.
+Requirements:
+- Return explicit relative paths for every file you create or change.
+- Include a real executable entrypoint in `main.py` unless a different conventional Python entrypoint is clearly required.
+- Wire the entrypoint to the actual application flow. Do not return a placeholder file.
+- Make `python main.py --smoke-test` succeed with exit code 0 after the project is saved.
+- Ensure local imports point to real files that you return in this response or that already exist.
+- If the code depends on packages, update `requirements.txt` or `pyproject.toml` consistently.
+"""
+            )
+
         if retry_feedback:
             prompt_parts.append(
                 "\nPrevious attempt was unusable:\n"
@@ -779,6 +915,8 @@ print("hello")
             if not result.success:
                 continue
             for artifact in result.artifacts:
+                if not self._should_persist_artifact(state, result, artifact):
+                    continue
                 artifact_content = self._hydrate_artifact_content(state, artifact)
                 if not artifact_content:
                     continue
@@ -799,6 +937,92 @@ print("hello")
                 saved_count += 1
 
         logger.info("Saved %s artifacts", saved_count)
+
+    def _should_persist_artifact(
+        self,
+        state: OrchestrationState,
+        result: AgentResult,
+        artifact: Artifact,
+    ) -> bool:
+        if not self._is_python_project_workflow(state):
+            return True
+
+        if result.agent_role == AgentRole.CODER:
+            return True
+
+        target_path = (self._artifact_target_path(artifact) or "").lower()
+        file_name = Path(target_path).name
+
+        if result.agent_role == AgentRole.DOCUMENT:
+            return artifact.artifact_type == "document" or file_name == "readme.md"
+
+        if result.agent_role == AgentRole.TESTER:
+            return target_path.startswith("tests/") or file_name.startswith("test_")
+
+        # 새 Python 프로젝트 생성에서는 리뷰/리서치 응답의 임시 코드 블록을 저장하지 않는다.
+        return False
+
+    def _is_python_artifact(self, artifact: Artifact) -> bool:
+        language = (artifact.language or "").lower()
+        target_path = self._artifact_target_path(artifact) or ""
+        return artifact.artifact_type == "code" and (language == "python" or target_path.endswith(".py"))
+
+    def _looks_like_test_artifact(self, artifact: Artifact) -> bool:
+        target_path = (artifact.file_path or artifact.name or "").replace("\\", "/").lower()
+        content = (artifact.content or "").lower()
+        return target_path.startswith("tests/") or Path(target_path).name.startswith("test_") or "def test_" in content
+
+    def _entrypoint_priority(self, artifact: Artifact) -> int:
+        content = artifact.content or ""
+        name = (artifact.file_path or artifact.name or "").lower()
+        score = 0
+        if "__name__ == \"__main__\"" in content or "__name__ == '__main__'" in content:
+            score += 8
+        if "def main(" in content or "async def main(" in content:
+            score += 5
+        if "argparse.argumentparser" in content.lower() or "typer.typer" in content.lower():
+            score += 3
+        if "main" in name:
+            score += 2
+        return score
+
+    def _prepare_generated_project_artifacts(self, state: OrchestrationState) -> None:
+        # 새 Python 프로젝트는 코드가 artifacts 폴더로 숨어버리면 실행 검증 자체가 불가능하다.
+        # 저장 전에 오케스트레이터가 엔트리포인트 경로를 보정해 실제 실행 가능한 파일을 보장한다.
+        if not self._is_python_project_workflow(state):
+            return
+
+        python_artifacts: list[Artifact] = []
+        explicit_targets = set()
+        for result in state.results:
+            if not result.success:
+                continue
+            for artifact in result.artifacts:
+                target_path = self._artifact_target_path(artifact)
+                if target_path:
+                    explicit_targets.add(target_path)
+                if self._is_python_artifact(artifact):
+                    python_artifacts.append(artifact)
+
+        if any(Path(path).name == "main.py" or path.endswith("/__main__.py") or Path(path).name == "manage.py" for path in explicit_targets):
+            return
+
+        unnamed_python = [artifact for artifact in python_artifacts if not artifact.file_path]
+        if not unnamed_python:
+            return
+
+        entrypoint_artifact = max(unnamed_python, key=self._entrypoint_priority)
+        entrypoint_artifact.file_path = "main.py"
+        entrypoint_artifact.metadata["assigned_path_by_orchestrator"] = "main.py"
+
+        for artifact in unnamed_python:
+            if artifact is entrypoint_artifact:
+                continue
+            if self._looks_like_test_artifact(artifact):
+                artifact.file_path = f"tests/test_{artifact.artifact_id}.py"
+            else:
+                fallback_name = Path(self._default_generated_filename(artifact)).name
+                artifact.file_path = f"generated/{artifact.artifact_id}_{fallback_name}"
 
     def _collect_relevant_files(self, state: OrchestrationState, limit: int = 8) -> list[str]:
         files = []
@@ -841,9 +1065,8 @@ print("hello")
         if artifact.artifact_type in {"code", "document"}:
             if filename and not self._is_generic_artifact_name(filename):
                 return filename
-            if self.workspace and self.workspace.is_attached_mode():
-                fallback_name = Path(filename).name if filename else self._default_generated_filename(artifact)
-                return f"generated/{artifact.artifact_id}_{fallback_name}"
+            fallback_name = Path(filename).name if filename else self._default_generated_filename(artifact)
+            return f"generated/{artifact.artifact_id}_{fallback_name}"
         return None
 
     def _default_generated_filename(self, artifact: Artifact) -> str:
@@ -872,6 +1095,653 @@ print("hello")
     def _is_generic_artifact_name(self, filename: str) -> bool:
         name = Path(filename).name.lower()
         return name.startswith("generated_") or name.startswith("artifact_")
+
+    def _collect_project_python_files(self, state: OrchestrationState) -> list[str]:
+        if not self.workspace or not state.project_id:
+            return []
+        project_root = self.workspace.get_project_path(state.project_id)
+        return [path for path in self._list_visible_project_files(project_root, limit=500) if path.endswith(".py")]
+
+    def _has_project_tests(self, python_files: list[str]) -> bool:
+        return any(path.startswith("tests/") or Path(path).name.startswith("test_") for path in python_files)
+
+    def _discover_python_entrypoint(self, state: OrchestrationState) -> Optional[str]:
+        python_files = self._collect_project_python_files(state)
+        for candidate in ["main.py", "src/main.py", "__main__.py"]:
+            if candidate in python_files:
+                return candidate
+        for path in python_files:
+            if path.endswith("/__main__.py") or Path(path).name == "manage.py":
+                return path
+        return None
+
+    def _build_project_file_context(self, state: OrchestrationState, file_paths: list[str], max_chars: int = 1800) -> str:
+        if not self.workspace or not state.project_id:
+            return ""
+
+        project_root = self.workspace.get_project_path(state.project_id)
+        sections = []
+        seen = set()
+        for relative_path in file_paths:
+            normalized = self._normalize_relative_path(relative_path)
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            file_path = project_root / normalized
+            if not file_path.exists() or not file_path.is_file():
+                continue
+            try:
+                content = file_path.read_text(encoding="utf-8", errors="replace")
+            except Exception as exc:
+                logger.debug("Project file context read failed: %s - %s", normalized, exc)
+                continue
+            sections.append(f"File: {normalized}\n```text\n{content[:max_chars]}\n```")
+        return "\n\n".join(sections)
+
+    def _summarize_validation_failure(self, failure: dict) -> str:
+        phase = failure.get("phase", "validation")
+        parts = [f"phase={phase}"]
+
+        if failure.get("entrypoint"):
+            parts.append(f"entrypoint={failure['entrypoint']}")
+
+        python_files = failure.get("python_files") or []
+        if python_files:
+            parts.append(f"python_files={', '.join(python_files[:8])}")
+
+        execution = failure.get("execution") or {}
+        if execution:
+            parts.append(f"command={execution.get('command', '')}")
+            stdout = (execution.get("stdout") or "").strip()
+            stderr = (execution.get("stderr") or "").strip()
+            if stdout:
+                parts.append(f"stdout={stdout[:600]}")
+            if stderr:
+                parts.append(f"stderr={stderr[:1200]}")
+
+        verification = failure.get("verification") or {}
+        if verification:
+            parts.append(f"verification={verification.get('summary', '')}")
+            test_result = verification.get("test_result") or {}
+            for error in (test_result.get("errors") or [])[:5]:
+                parts.append(error)
+            smoke_result = verification.get("smoke_result") or {}
+            smoke_stderr = (smoke_result.get("stderr") or "").strip()
+            if smoke_stderr:
+                parts.append(f"smoke_stderr={smoke_stderr[:1200]}")
+            packaging_result = verification.get("packaging_result") or {}
+            if packaging_result and not packaging_result.get("success", True):
+                parts.append(f"packaging={packaging_result.get('summary', '')}")
+                for issue in (packaging_result.get("issues") or [])[:5]:
+                    message = issue.get("message") or str(issue)
+                    if message:
+                        parts.append(message[:1200])
+
+        return "\n".join(part for part in parts if part)
+
+    def _guess_entrypoint_callable(self, file_path: Path) -> Optional[str]:
+        import ast as _ast
+
+        try:
+            tree = _ast.parse(file_path.read_text(encoding="utf-8", errors="replace"))
+        except (OSError, SyntaxError):
+            return None
+
+        defined = [
+            node.name
+            for node in tree.body
+            if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef))
+        ]
+        for candidate in ["main", "run_cli", "run", "cli", "app"]:
+            if candidate in defined:
+                return candidate
+        return defined[0] if defined else None
+
+    def _find_spec_safe(self, module_name: str):
+        import importlib.util as _importlib_util
+
+        try:
+            return _importlib_util.find_spec(module_name)
+        except (ImportError, ModuleNotFoundError, ValueError):
+            return None
+
+    def _build_root_entrypoint_wrapper(self, module_name: str, callable_name: str) -> str:
+        return (
+            "from pathlib import Path\n"
+            "import sys\n\n"
+            "# 루트 main.py를 직접 실행해도 src 레이아웃 패키지 엔트리포인트가 동작하도록 맞춘다.\n"
+            "PROJECT_SRC = Path(__file__).resolve().parent / \"src\"\n"
+            "if PROJECT_SRC.exists() and str(PROJECT_SRC) not in sys.path:\n"
+            "    sys.path.insert(0, str(PROJECT_SRC))\n\n"
+            f"from {module_name} import {callable_name} as project_entrypoint\n\n"
+            "def main() -> None:\n"
+            "    project_entrypoint()\n\n"
+            "if __name__ == \"__main__\":\n"
+            "    main()\n"
+        )
+
+    def _maybe_apply_common_runtime_repair(
+        self,
+        state: OrchestrationState,
+        failure: dict,
+        attempt: int,
+    ) -> Optional[AgentResult]:
+        if not self.workspace or not state.project_id:
+            return None
+
+        execution = failure.get("execution") or {}
+        stderr = (execution.get("stderr") or "").strip()
+        if "ModuleNotFoundError" not in stderr:
+            return None
+
+        import re as _re
+
+        match = _re.search(r"No module named ['\"]([^'\"]+)['\"]", stderr)
+        if not match:
+            return None
+
+        missing_module = match.group(1).split(".")[0]
+        project_root = self.workspace.get_project_path(state.project_id)
+        entrypoint = failure.get("entrypoint") or "main.py"
+        entrypoint_path = project_root / entrypoint
+        if not entrypoint_path.exists():
+            return None
+
+        src_package_dir = project_root / "src" / missing_module
+        src_module_file = project_root / "src" / f"{missing_module}.py"
+        if not src_package_dir.exists() and not src_module_file.exists():
+            return None
+
+        try:
+            original = entrypoint_path.read_text(encoding="utf-8", errors="replace")
+        except Exception as exc:
+            logger.debug("Common runtime repair read failed: %s", exc)
+            return None
+
+        if "PROJECT_SRC = Path(__file__).resolve().parent / \"src\"" in original:
+            return None
+
+        # src 레이아웃에서 main.py를 직접 실행하면 패키지 import가 깨지기 쉬워서,
+        # 공통 bootstrap을 먼저 넣어 실제 엔트리포인트가 루트에서 바로 실행되도록 보정한다.
+        bootstrap = (
+            "from pathlib import Path\n"
+            "import sys\n\n"
+            "PROJECT_SRC = Path(__file__).resolve().parent / \"src\"\n"
+            "if PROJECT_SRC.exists() and str(PROJECT_SRC) not in sys.path:\n"
+            "    sys.path.insert(0, str(PROJECT_SRC))\n\n"
+        )
+        repaired = bootstrap + original
+
+        return AgentResult(
+            task_id=str(uuid.uuid4()),
+            agent_name=self.coder.name,
+            agent_role=AgentRole.CODER,
+            content="Applied common src-layout bootstrap repair to main.py",
+            artifacts=[
+                Artifact(
+                    name=Path(entrypoint).name,
+                    artifact_type="code",
+                    content=repaired,
+                    file_path=entrypoint,
+                    language="python",
+                    metadata={
+                        "repair_loop": "python_project_runtime",
+                        "repair_attempt": attempt,
+                        "repair_strategy": "src_layout_bootstrap",
+                    },
+                )
+            ],
+            success=True,
+            metadata={
+                "repair_loop": "python_project_runtime",
+                "repair_attempt": attempt,
+                "repair_strategy": "src_layout_bootstrap",
+            },
+        )
+
+    def _maybe_apply_common_packaging_repair(
+        self,
+        state: OrchestrationState,
+        failure: dict,
+        attempt: int,
+    ) -> Optional[AgentResult]:
+        import re as _re
+        import tomllib as _tomllib
+
+        verification = failure.get("verification") or {}
+        packaging_result = verification.get("packaging_result") or {}
+        if packaging_result.get("success", True):
+            return None
+        if not self.workspace or not state.project_id:
+            return None
+
+        project_root = self.workspace.get_project_path(state.project_id)
+        pyproject_path = project_root / "pyproject.toml"
+        root_main_path = project_root / "main.py"
+        if not pyproject_path.exists() or not root_main_path.exists():
+            return None
+
+        try:
+            pyproject_content = pyproject_path.read_text(encoding="utf-8", errors="replace")
+            pyproject_data = _tomllib.loads(pyproject_content)
+            root_main_content = root_main_path.read_text(encoding="utf-8", errors="replace")
+        except Exception as exc:
+            logger.debug("Common packaging repair read failed: %s", exc)
+            return None
+
+        artifacts: list[Artifact] = []
+        changed_paths: set[str] = set()
+
+        build_system = pyproject_data.get("build-system") or {}
+        build_requires = [str(item).lower() for item in (build_system.get("requires") or [])]
+        build_backend = (build_system.get("build-backend") or "").strip()
+        backend_module = build_backend.split(":", 1)[0].strip() if build_backend else ""
+        if (
+            build_backend
+            and backend_module
+            and self._find_spec_safe(backend_module) is None
+            and any("setuptools" in item for item in build_requires)
+        ):
+            replaced = _re.sub(
+                r'(?m)^build-backend\s*=\s*".*"$',
+                'build-backend = "setuptools.build_meta"',
+                pyproject_content,
+            )
+            if replaced != pyproject_content:
+                pyproject_content = replaced
+                changed_paths.add("pyproject.toml")
+
+        tool_data = pyproject_data.get("tool") or {}
+        setuptools_data = tool_data.get("setuptools") or {}
+        packages_data = setuptools_data.get("packages") or {}
+        find_data = packages_data.get("find") or {}
+        where_values = find_data.get("where") or []
+        if isinstance(where_values, str):
+            where_values = [where_values]
+
+        module_root = project_root
+        if where_values:
+            module_root = (project_root / where_values[0]).resolve()
+
+        scripts = (pyproject_data.get("project") or {}).get("scripts") or {}
+        root_callable = self._guess_entrypoint_callable(root_main_path)
+        for target in scripts.values():
+            if not isinstance(target, str) or ":" not in target:
+                continue
+
+            module_name, callable_name = [item.strip() for item in target.split(":", 1)]
+            module_parts = [part for part in module_name.split(".") if part]
+            if not module_parts:
+                continue
+
+            module_file = module_root.joinpath(*module_parts).with_suffix(".py")
+            package_module_init = module_root.joinpath(*module_parts, "__init__.py")
+            package_init_paths = [
+                module_root.joinpath(*module_parts[:index], "__init__.py")
+                for index in range(1, len(module_parts))
+            ]
+            module_exists = module_file.exists() or package_module_init.exists()
+            if module_exists:
+                continue
+
+            chosen_callable = callable_name if callable_name == root_callable else (root_callable or callable_name)
+            if not chosen_callable:
+                continue
+
+            for init_path in package_init_paths:
+                try:
+                    relative_init = init_path.relative_to(project_root).as_posix()
+                except ValueError:
+                    continue
+                if relative_init in changed_paths or init_path.exists():
+                    continue
+                artifacts.append(
+                    Artifact(
+                        name=init_path.name,
+                        artifact_type="code",
+                        content='"""Generated package for the executable entrypoint."""\n',
+                        file_path=relative_init,
+                        language="python",
+                        metadata={
+                            "repair_loop": "python_project_runtime",
+                            "repair_attempt": attempt,
+                            "repair_strategy": "packaging_package_init",
+                        },
+                    )
+                )
+                changed_paths.add(relative_init)
+
+            try:
+                relative_module = module_file.relative_to(project_root).as_posix()
+            except ValueError:
+                continue
+
+            artifacts.append(
+                Artifact(
+                    name=module_file.name,
+                    artifact_type="code",
+                    content=root_main_content,
+                    file_path=relative_module,
+                    language="python",
+                    metadata={
+                        "repair_loop": "python_project_runtime",
+                        "repair_attempt": attempt,
+                        "repair_strategy": "packaging_module_alignment",
+                    },
+                )
+            )
+            changed_paths.add(relative_module)
+
+            wrapper_content = self._build_root_entrypoint_wrapper(module_name, chosen_callable)
+            artifacts.append(
+                Artifact(
+                    name="main.py",
+                    artifact_type="code",
+                    content=wrapper_content,
+                    file_path="main.py",
+                    language="python",
+                    metadata={
+                        "repair_loop": "python_project_runtime",
+                        "repair_attempt": attempt,
+                        "repair_strategy": "root_entrypoint_wrapper",
+                    },
+                )
+            )
+            changed_paths.add("main.py")
+
+        if "pyproject.toml" in changed_paths:
+            artifacts.append(
+                Artifact(
+                    name="pyproject.toml",
+                    artifact_type="code",
+                    content=pyproject_content,
+                    file_path="pyproject.toml",
+                    language="toml",
+                    metadata={
+                        "repair_loop": "python_project_runtime",
+                        "repair_attempt": attempt,
+                        "repair_strategy": "packaging_backend_fix",
+                    },
+                )
+            )
+
+        if not artifacts:
+            return None
+
+        return AgentResult(
+            task_id=str(uuid.uuid4()),
+            agent_name=self.coder.name,
+            agent_role=AgentRole.CODER,
+            content="Applied common packaging repair for generated Python project",
+            artifacts=artifacts,
+            success=True,
+            metadata={
+                "repair_loop": "python_project_runtime",
+                "repair_attempt": attempt,
+                "repair_strategy": "common_packaging_repair",
+            },
+        )
+
+    def _repair_python_project_from_validation(
+        self,
+        state: OrchestrationState,
+        failure: dict,
+        attempt: int,
+    ) -> AgentResult:
+        python_files = self._collect_project_python_files(state)
+        context_files = []
+        if failure.get("entrypoint"):
+            context_files.append(failure["entrypoint"])
+        context_files.extend(python_files[:6])
+        for config_path in ["requirements.txt", "pyproject.toml", "README.md"]:
+            context_files.append(config_path)
+
+        project_root = Path(state.metadata.get("project_root", "."))
+        prompt = "\n".join(
+            [
+                "The generated Python project is not yet runnable.",
+                f"Repair attempt: {attempt}",
+                "",
+                "Validation failure:",
+                self._summarize_validation_failure(failure),
+                "",
+                "Current project files:",
+                "\n".join(f"- {path}" for path in self._list_visible_project_files(project_root, limit=40)),
+                "",
+                "Current file contents:",
+                self._build_project_file_context(state, context_files),
+                "",
+                "Return only corrected file contents with explicit relative paths.",
+                "Requirements:",
+                "- Guarantee a real executable Python entrypoint in main.py unless __main__.py/manage.py is clearly more conventional.",
+                "- `python main.py --smoke-test` must exit with code 0.",
+                "- The smoke-test path must exercise the real application wiring and then exit cleanly.",
+                "- Fix missing local modules, imports, and runtime errors shown above.",
+                "- Make package/module layout and pyproject/setup entrypoints resolve to real files and callables.",
+                "- If you introduce or keep external dependencies, update requirements.txt or pyproject.toml consistently.",
+            ]
+        )
+
+        content = self.coder.generate(prompt)
+        artifacts = self.coder._parse_code_response(content)
+        valid, error = self._validate_coder_output(content, artifacts)
+        return AgentResult(
+            task_id=str(uuid.uuid4()),
+            agent_name=self.coder.name,
+            agent_role=AgentRole.CODER,
+            content=content,
+            artifacts=artifacts,
+            success=valid,
+            error=error,
+            metadata={
+                "repair_loop": "python_project_runtime",
+                "repair_attempt": attempt,
+            },
+        )
+
+    def _format_python_project_validation_report(self, metadata: dict) -> str:
+        lines = [
+            "## Python Project Validation",
+            f"- success: {metadata.get('success')}",
+            f"- entrypoint: {metadata.get('entrypoint') or 'missing'}",
+            f"- attempts: {metadata.get('attempt_count', 0)}",
+            f"- final verification: {metadata.get('final_summary') or 'not completed'}",
+        ]
+        failure_summary = metadata.get("failure_summary")
+        if failure_summary:
+            lines.extend(["", "### Failure", failure_summary[:3000]])
+
+        attempt_logs = metadata.get("attempt_logs") or []
+        if attempt_logs:
+            lines.extend(["", "### Attempts"])
+            for item in attempt_logs:
+                status = "ok" if item.get("success") else "failed"
+                detail = item.get("detail") or ""
+                lines.append(f"- attempt {item.get('attempt')}: {item.get('phase')} [{status}] {detail}")
+        return "\n".join(lines)
+
+    def _run_python_project_validation_loop(self, state: OrchestrationState) -> AgentResult:
+        # 생성 완료 조건은 "파일이 생겼는가"가 아니라 "실제로 실행되고 최종 검증을 통과했는가"다.
+        # 실패하면 stdout/stderr를 다시 코더에게 넘겨 고치고, 성공할 때까지 실행-수정-재실행을 반복한다.
+        if not self.tester:
+            metadata = {
+                "success": False,
+                "entrypoint": None,
+                "attempt_count": 0,
+                "attempt_logs": [],
+                "final_summary": "tester agent unavailable",
+                "failure_summary": "tester agent unavailable",
+                "blocking": True,
+            }
+            state.metadata["project_validation"] = metadata
+            return AgentResult(
+                task_id=str(uuid.uuid4()),
+                agent_name="Tester",
+                agent_role=AgentRole.TESTER,
+                content=self._format_python_project_validation_report(metadata),
+                success=False,
+                error="tester agent unavailable",
+                metadata=metadata,
+            )
+
+        attempt_logs = []
+        max_attempts = max(2, min(self.max_iterations, 5))
+        last_failure_summary = ""
+        last_entrypoint: Optional[str] = None
+        last_failure: Optional[dict] = None
+
+        for attempt in range(1, max_attempts + 1):
+            self._prepare_generated_project_artifacts(state)
+            self._save_artifacts(state)
+
+            python_files = self._collect_project_python_files(state)
+            entrypoint = self._discover_python_entrypoint(state)
+            last_entrypoint = entrypoint
+
+            if not entrypoint:
+                failure = {
+                    "phase": "entrypoint",
+                    "python_files": python_files,
+                }
+                last_failure = failure
+                last_failure_summary = self._summarize_validation_failure(failure)
+                attempt_logs.append(
+                    {
+                        "attempt": attempt,
+                        "phase": "entrypoint",
+                        "success": False,
+                        "detail": "main.py or equivalent entrypoint is missing",
+                    }
+                )
+            else:
+                execution = self.tester.run_python_smoke_test(
+                    entrypoint,
+                    timeout=30,
+                    smoke_args=["--smoke-test"],
+                )
+                attempt_logs.append(
+                    {
+                        "attempt": attempt,
+                        "phase": "smoke-run",
+                        "success": execution.get("success", False),
+                        "detail": execution.get("command", ""),
+                    }
+                )
+                if execution.get("success", False):
+                    verification = self.tester.final_verify_python_project(
+                        entrypoint,
+                        python_files,
+                        has_tests=self._has_project_tests(python_files),
+                        smoke_args=["--smoke-test"],
+                    )
+                    attempt_logs.append(
+                        {
+                            "attempt": attempt,
+                            "phase": "final-verification",
+                            "success": verification.get("success", False),
+                            "detail": verification.get("summary", ""),
+                        }
+                    )
+                    if verification.get("success", False):
+                        metadata = {
+                            "success": True,
+                            "entrypoint": entrypoint,
+                            "attempt_count": attempt,
+                            "attempt_logs": attempt_logs,
+                            "final_summary": verification.get("summary", ""),
+                            "verification": verification,
+                            "blocking": True,
+                        }
+                        state.metadata["project_validation"] = metadata
+                        return AgentResult(
+                            task_id=str(uuid.uuid4()),
+                            agent_name=self.tester.name,
+                            agent_role=AgentRole.TESTER,
+                            content=self._format_python_project_validation_report(metadata),
+                            success=True,
+                            metadata=metadata,
+                        )
+
+                    failure = {
+                        "phase": "final_verification",
+                        "entrypoint": entrypoint,
+                        "python_files": python_files,
+                        "verification": verification,
+                    }
+                else:
+                    failure = {
+                        "phase": "execution",
+                        "entrypoint": entrypoint,
+                        "python_files": python_files,
+                        "execution": execution,
+                    }
+
+                last_failure = failure
+                last_failure_summary = self._summarize_validation_failure(failure)
+
+            # 재시도는 실제 실행 실패를 근거로 한 코더 수정 요청이어야 한다.
+            if attempt >= max_attempts:
+                break
+
+            repair_input = last_failure or {
+                "phase": "repair_input",
+                "entrypoint": last_entrypoint,
+                "python_files": self._collect_project_python_files(state),
+                "execution": {"stderr": last_failure_summary},
+            }
+            repair_result = self._maybe_apply_common_runtime_repair(state, repair_input, attempt)
+            if not repair_result:
+                repair_result = self._maybe_apply_common_packaging_repair(state, repair_input, attempt)
+            if not repair_result:
+                repair_result = self._repair_python_project_from_validation(
+                    state,
+                    repair_input,
+                    attempt,
+                )
+            self._store_result(state, repair_result)
+            attempt_logs.append(
+                {
+                    "attempt": attempt,
+                    "phase": "repair",
+                    "success": repair_result.success,
+                    "detail": repair_result.error or ", ".join(
+                        artifact.file_path or artifact.name for artifact in repair_result.artifacts[:5]
+                    ),
+                }
+            )
+            if not repair_result.success:
+                last_failure_summary = repair_result.error or "repair response was not usable"
+
+        metadata = {
+            "success": False,
+            "entrypoint": last_entrypoint,
+            "attempt_count": max_attempts,
+            "attempt_logs": attempt_logs,
+            "final_summary": "runtime validation failed",
+            "failure_summary": last_failure_summary,
+            "blocking": True,
+        }
+        state.metadata["project_validation"] = metadata
+        return AgentResult(
+            task_id=str(uuid.uuid4()),
+            agent_name=self.tester.name if self.tester else "Tester",
+            agent_role=AgentRole.TESTER,
+            content=self._format_python_project_validation_report(metadata),
+            success=False,
+            error=last_failure_summary,
+            metadata=metadata,
+        )
+
+    def _enforce_completion_criteria(self, state: OrchestrationState) -> None:
+        # 새 Python 프로젝트는 실제 실행 검증이 성공해야만 생성 완료로 간주한다.
+        if not self._is_python_project_workflow(state):
+            return
+
+        validation = state.metadata.get("project_validation") or {}
+        if not validation:
+            raise RuntimeError("generated Python project was not validated")
+        if not validation.get("success"):
+            raise RuntimeError(validation.get("failure_summary") or "generated Python project failed validation")
 
     def _validate_coder_output(self, content: str, artifacts: list[Artifact]) -> tuple[bool, str]:
         if not artifacts:

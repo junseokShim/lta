@@ -7,14 +7,14 @@ workspace:
 
 backend:
   default: "ollama"
-  timeout: 120
-  retry_attempts: 3
+  timeout: 3600
+  retry_attempts: 5
 
 ollama:
   host: "http://localhost:11434"
-  default_model: "gemma4:e4b"
+  default_model: "gemma4:26b"
   vision_model: "llava:7b"
-  fast_model: "gemma4:e4b"  # 빠른 작업용 경량 모델
+  fast_model: "gemma4:26b"  # 빠른 작업용 경량 모델
   temperature: 0.7
   top_p: 0.9
   context_length: 4096

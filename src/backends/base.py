@@ -24,7 +24,7 @@ class BackendConfig:
     model: str = "llama3.1:8b"
     temperature: float = 0.7
     top_p: float = 0.9
-    max_tokens: int = 2048
+    max_tokens: int = 4096
     context_length: int = 4096
     timeout: int = 120
     retry_attempts: int = 3

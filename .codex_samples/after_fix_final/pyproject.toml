@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setual.build_meta" # 기본 setuptools 빌드 백엔드 사용
+
+[project]
+name = "greeting-cli"
+version = "0.1.0"
+description = "이름을 입력받아 인사하는 간단한 CLI 프로젝트"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    {name = "Software Engineer", email = "engineer@example.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+# 터미널에서 'greet-me' 명령어를 입력하면 run_cli 함수가 실행됩니다.
+greet-me = "greeting_cli.main:run_cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]

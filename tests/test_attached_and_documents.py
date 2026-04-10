@@ -390,4 +390,4 @@ def test_backend_retry_falls_back_on_server_error_and_reduces_context():
     assert backend.calls[1][0] == "fast"
     assert backend.calls[1][1] == 500
     assert backend.calls[1][2] == 0.3
-    assert backend.calls[1][3] == 2048
+    assert backend.calls[1][3] == 4096

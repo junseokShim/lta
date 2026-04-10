@@ -218,6 +218,25 @@ class ShellTool:
 
         return result
 
+    def run_python_file(
+        self,
+        file_path: str,
+        args: Optional[list[str]] = None,
+        cwd: Optional[str] = None,
+        env_override: Optional[dict] = None,
+        timeout: Optional[int] = None,
+    ) -> CommandResult:
+        """Run a Python entrypoint file inside the workspace."""
+        command_args = [self.python_executable, file_path]
+        if args:
+            command_args.extend(args)
+        return self.run(
+            self._join_command(command_args),
+            cwd=cwd,
+            env_override=env_override,
+            timeout_override=timeout,
+        )
+
     def run_pytest(
         self,
         test_targets: Optional[list[str]] = None,
