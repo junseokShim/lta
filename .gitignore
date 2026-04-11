@@ -4,3 +4,4 @@ venv/
 .venv/
 .codex_samples/
 .idea/
+workspaces/
