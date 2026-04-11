@@ -38,6 +38,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="저장된 이전 대화를 불러오지 않고 새 채팅으로 시작",
     )
+    parser.add_argument(
+        "--mode",
+        default="chat",
+        choices=["chat", "agent"],
+        help="시작 모드: 'chat' (경량 직접 대화) 또는 'agent' (전체 오케스트레이션). 기본값: chat",
+    )
     return parser
 
 
@@ -79,6 +85,7 @@ def main() -> None:
             project_dir=args.project_dir,
             managed=args.managed,
             fresh=args.fresh,
+            mode=args.mode,
         )
         return
 

@@ -46,17 +46,42 @@ Local Team Agent는 로컬 LLM을 기반으로 여러 역할의 에이전트를 
 - 결과 파일은 실제 프로젝트 루트에 직접 반영 가능
 - 프로젝트별 대화 이력 유지
 
-### 3. 대화형 채팅 모드
+### 3. 대화형 채팅 모드 (chat mode / agent mode 이중 지원)
 
 CMD에서 Claude Code처럼 이어서 사용할 수 있습니다.
 
-- `lta chat`
-- `python run.py --chat`
+```bash
+python run.py --chat              # 기본: chat 모드로 시작
+python run.py --chat --mode chat  # chat 모드 명시적 지정
+python run.py --chat --mode agent # agent 모드로 시작
+```
 
-채팅 모드 특징:
+#### chat 모드 vs agent 모드
 
-- 최근 대화를 프로젝트별로 저장
-- 다음 실행 시 자동 복원
+| 구분 | chat 모드 (기본) | agent 모드 |
+|------|-----------------|-----------|
+| 동작 방식 | LLM에 직접 질문, 즉시 답변 | 전체 multi-agent 오케스트레이션 |
+| 처리 속도 | 빠름 (단일 LLM 호출) | 느림 (Manager→Planner→Coder→Reviewer→Tester) |
+| 적합한 요청 | 질문, 설명, 간단한 조언 | 파일 생성/수정, 코드 구현, 테스트 작성, 리팩토링 |
+| 파일 변경 | 없음 | 있음 (실제 프로젝트 파일 반영) |
+
+#### 모드 전환
+
+세션 중에도 언제든지 전환 가능합니다.
+
+```
+/mode           현재 활성 모드 확인
+/mode chat      chat 모드로 전환 (경량 직접 대화)
+/mode agent     agent 모드로 전환 (전체 오케스트레이션)
+```
+
+#### chat 모드에서 escalation
+
+chat 모드에서 요청이 파일 생성·코드 수정 등 복잡한 작업을 포함하는 경우, 시스템이 자동으로 `/mode agent` 전환을 제안합니다.
+
+#### 공통 특징
+
+- 최근 대화를 프로젝트별로 저장, 다음 실행 시 자동 복원
 - `/quick` 로 특정 에이전트만 빠르게 호출 가능
 - `/clear` 로 현재 프로젝트 대화 이력 초기화 가능
 

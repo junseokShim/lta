@@ -732,6 +732,46 @@ class OrchestrationEngine:
 
         return agent.generate("\n".join(prompt_parts))
 
+    def chat_direct(
+        self,
+        message: str,
+        conversation_history: Optional[list[dict]] = None,
+    ) -> str:
+        """
+        경량 채팅 모드: 오케스트레이션 파이프라인 없이 LLM에 직접 질문합니다.
+        간단한 질문, 설명 요청, 빠른 대화에 사용합니다.
+        파일 생성·수정 등 복잡한 작업이 필요하면 /mode agent 전환을 안내합니다.
+        """
+        # 경량 채팅용 시스템 프롬프트 — 오케스트레이션 없이 직접 답변
+        system_prompt = (
+            "당신은 유용하고 친절한 AI 어시스턴트입니다. "
+            "사용자의 질문에 직접, 간결하게 답변하세요. "
+            "한국어 또는 사용자가 사용한 언어로 답변하세요. "
+            "파일 생성, 코드 수정, 프로젝트 실행, 테스트 작성 등 "
+            "복잡한 작업이 필요한 경우에는 답변 말미에 "
+            "'이 작업은 agent 모드(/mode agent)에서 더 잘 처리할 수 있습니다.' 라고 안내하세요."
+        )
+
+        # 대화 히스토리를 컨텍스트로 포함 (최근 10개 메시지)
+        prompt_parts = []
+        if conversation_history:
+            recent = conversation_history[-10:]
+            for msg in recent:
+                role = msg.get("role", "")
+                content = msg.get("content", "")
+                if role and content:
+                    prefix = "사용자" if role == "user" else "어시스턴트"
+                    prompt_parts.append(f"{prefix}: {content[:500]}")
+
+        prompt_parts.append(f"사용자: {message}")
+        full_prompt = "\n".join(prompt_parts)
+
+        # 매니저 에이전트를 통해 직접 LLM 호출 (fast model 사용 가능)
+        return self.manager.generate(
+            full_prompt,
+            system_prompt_override=system_prompt,
+        )
+
     def _run_researcher(
         self,
         state: OrchestrationState,

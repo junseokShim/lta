@@ -670,9 +670,35 @@ def _print_chat_help() -> None:
 /clear     clear conversation memory
 /project   show current project binding
 /quick a t run a quick single-agent request, e.g. /quick coder 테스트 추가해줘
+/mode      show current mode (chat / agent)
+/mode chat switch to lightweight chat mode (direct LLM, no orchestration)
+/mode agent switch to agent mode (full multi-agent orchestration pipeline)
 /exit      leave chat
 """
     )
+
+
+# 에이전트 모드 전환이 필요할 가능성이 높은 키워드 목록
+# 이 키워드가 포함된 요청은 chat 모드에서 agent 모드 전환을 제안합니다.
+_AGENT_ESCALATION_KEYWORDS = {
+    # 한국어
+    "파일 생성", "파일 만들", "코드 작성", "구현해", "수정해", "고쳐", "만들어줘",
+    "테스트 작성", "테스트 추가", "리팩토링", "빌드", "실행해줘", "배포",
+    "파일을 열어", "저장해줘", "폴더", "디렉토리",
+    # 영어
+    "create file", "write code", "implement", "modify", "edit file",
+    "write test", "add test", "refactor", "build", "run it", "deploy",
+    "open file", "save file",
+}
+
+
+def _suggest_agent_mode(user_input: str) -> bool:
+    """
+    입력 내용이 에이전트 모드에서 더 잘 처리될 요청인지 판단합니다.
+    Returns True if the input looks like it needs the full agent pipeline.
+    """
+    lower = user_input.lower()
+    return any(kw in lower for kw in _AGENT_ESCALATION_KEYWORDS)
 
 
 @app.command()
@@ -775,6 +801,12 @@ def chat(
         "--fresh",
         help="저장된 이전 대화를 불러오지 않고 새 채팅으로 시작",
     ),
+    mode: str = typer.Option(
+        "chat",
+        "--mode",
+        "-m",
+        help="시작 모드: 'chat' (경량 직접 대화) 또는 'agent' (전체 오케스트레이션)",
+    ),
 ) -> None:
     """Start an interactive chat session like Claude Code in CMD."""
     print_banner()
@@ -800,6 +832,16 @@ def chat(
     if not fresh and engine.workspace and session_project_id:
         history = engine.workspace.get_chat_history(session_project_id, limit=24)
 
+    # 활성 모드: "chat" (경량 직접 대화) 또는 "agent" (전체 오케스트레이션)
+    # 기본값은 --mode 옵션으로 결정 (미지정 시 "chat")
+    active_mode = mode if mode in {"chat", "agent"} else "chat"
+
+    def _mode_label() -> str:
+        """현재 활성 모드를 표시하는 레이블 반환"""
+        if active_mode == "chat":
+            return "[bold cyan]chat[/bold cyan]"
+        return "[bold yellow]agent[/bold yellow]"
+
     console.print("[dim]Interactive chat started. Type /help for commands.[/dim]")
     if resolved_project_dir:
         console.print(f"[dim]Attached project: {resolved_project_dir}[/dim]")
@@ -807,11 +849,17 @@ def chat(
         console.print(f"[dim]Managed project: {project_id}[/dim]")
     if history:
         console.print(f"[dim]Loaded {len(history)} previous messages for this project.[/dim]")
+    # 현재 모드 안내
+    console.print(
+        f"[dim]Mode: {_mode_label()} [dim]— /mode chat | /mode agent 로 전환 | /help 명령어 목록[/dim]"
+    )
     console.print("[dim]For long prompts, use /multi and finish with /end.[/dim]")
 
     while True:
+        # 현재 모드를 프롬프트에 표시하여 사용자가 항상 인지할 수 있게 함
+        prompt_label = f"you [{active_mode}]"
         try:
-            user_input = typer.prompt("you")
+            user_input = typer.prompt(prompt_label)
         except (EOFError, KeyboardInterrupt):
             console.print("\n[dim]Chat ended.[/dim]")
             break
@@ -871,6 +919,25 @@ def chat(
             else:
                 console.print(f"[dim]Managed project: {session_project_id or '(not created yet)'}[/dim]")
             continue
+
+        # ── 모드 라우팅 명령어 처리 ──────────────────────────────────────────
+        # /mode        : 현재 모드 표시
+        # /mode chat   : 경량 직접 대화 모드로 전환
+        # /mode agent  : 전체 오케스트레이션 모드로 전환
+        if user_input == "/mode":
+            console.print(f"[dim]현재 모드: {_mode_label()}[/dim]")
+            console.print("[dim]전환: /mode chat | /mode agent[/dim]")
+            continue
+        if user_input == "/mode chat":
+            active_mode = "chat"
+            console.print("[bold cyan]chat 모드로 전환했습니다.[/bold cyan] (경량 직접 대화 — 오케스트레이션 없음)")
+            continue
+        if user_input == "/mode agent":
+            active_mode = "agent"
+            console.print("[bold yellow]agent 모드로 전환했습니다.[/bold yellow] (전체 multi-agent 오케스트레이션)")
+            continue
+        # ─────────────────────────────────────────────────────────────────────
+
         if user_input.startswith("/quick "):
             quick_parts = user_input.split(maxsplit=2)
             if len(quick_parts) < 3:
@@ -888,21 +955,40 @@ def chat(
             _print_panel(quick_result, f"[bold cyan]Quick:{quick_agent}[/bold cyan]", border_style="cyan")
             continue
 
-        additional_context = {}
-        if history:
-            additional_context["conversation_history"] = _format_chat_history(history)
+        # ── 실제 요청 처리: 활성 모드에 따라 분기 ─────────────────────────────
+        if active_mode == "chat":
+            # 채팅 모드: 오케스트레이션 없이 LLM에 직접 질문 (빠르고 가벼움)
+            chat_response = engine.chat_direct(
+                message=user_input,
+                conversation_history=history,
+            )
+            _append_chat_history(engine, session_project_id, history, "user", user_input)
+            _append_chat_history(engine, session_project_id, history, "assistant", chat_response)
+            _print_panel(chat_response, f"[bold cyan]Assistant [chat][/bold cyan]", border_style="cyan")
 
-        state = engine.run(
-            user_task=user_input,
-            project_id=session_project_id,
-            additional_context=additional_context or None,
-        )
-        if state.project_id:
-            session_project_id = state.project_id
+            # 에이전트 모드 전환 힌트: 요청이 복잡해 보이는 경우 제안
+            if _suggest_agent_mode(user_input):
+                console.print(
+                    "[dim]💡 이 요청은 /mode agent 로 전환 후 실행하면 실제 파일 작업을 수행할 수 있습니다.[/dim]"
+                )
+        else:
+            # 에이전트 모드: 전체 multi-agent 오케스트레이션 파이프라인 실행
+            additional_context = {}
+            if history:
+                additional_context["conversation_history"] = _format_chat_history(history)
 
-        _append_chat_history(engine, session_project_id, history, "user", user_input)
-        _append_chat_history(engine, session_project_id, history, "assistant", state.final_output)
-        _print_panel(state.final_output, "[bold green]Assistant[/bold green]")
+            state = engine.run(
+                user_task=user_input,
+                project_id=session_project_id,
+                additional_context=additional_context or None,
+            )
+            if state.project_id:
+                session_project_id = state.project_id
+
+            _append_chat_history(engine, session_project_id, history, "user", user_input)
+            _append_chat_history(engine, session_project_id, history, "assistant", state.final_output)
+            _print_panel(state.final_output, "[bold green]Assistant [agent][/bold green]")
+        # ─────────────────────────────────────────────────────────────────────
 
 
 @app.command()
