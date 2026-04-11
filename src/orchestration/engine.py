@@ -732,6 +732,318 @@ class OrchestrationEngine:
 
         return agent.generate("\n".join(prompt_parts))
 
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # 경량 채팅 모드 (Chat Mode) — 워크스페이스 인식 직접 LLM 호출
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    # 파일/폴더 참조를 감지하기 위한 정규식 패턴
+    # 확장자가 있는 파일명, '/'로 끝나는 경로, 공통 디렉토리명을 감지한다.
+    _CHAT_PATH_PATTERN = None  # 지연 컴파일 (모듈 로드 최적화)
+
+    _COMMON_DIR_NAMES = {
+        # 일반적인 프로젝트 디렉토리 이름
+        "src", "data", "tests", "test", "docs", "doc", "config",
+        "scripts", "notebooks", "models", "output", "outputs",
+        "logs", "log", "assets", "static", "templates", "resources",
+        "lib", "libs", "utils", "tools", "bin", "build", "dist",
+        # 한국어 키워드 → 영어 디렉토리명으로 매핑은 불가능하므로
+        # 메시지 내 '데이터 폴더', '소스 코드' 등은 별도 처리
+    }
+
+    def _get_active_workspace_root_for_chat(self) -> Optional[Path]:
+        """
+        채팅 모드에서 사용할 워크스페이스 루트를 결정합니다.
+
+        우선순위:
+        1. 이미 bind_project_root()가 호출된 경우 researcher.fs.workspace_root 사용
+        2. attached 모드인 경우 workspace.workspace_root 사용
+        3. 접근 불가: None 반환
+        """
+        # 1순위: researcher 에 이미 바인딩된 fs 사용 (가장 정확)
+        if self.researcher and self.researcher.fs:
+            root = self.researcher.fs.workspace_root
+            if root and root.exists():
+                return root
+
+        # 2순위: workspace manager의 attached 모드 루트
+        if self.workspace:
+            if self.workspace.is_attached_mode():
+                root = self.workspace.workspace_root
+                if root and root.exists():
+                    return root
+            # 관리형 워크스페이스: 첫 번째 프로젝트 경로 사용
+            try:
+                projects = self.workspace.list_projects()
+                if projects:
+                    proj_path = self.workspace.get_project_path(projects[0].project_id)
+                    if proj_path.exists():
+                        return proj_path
+            except Exception:
+                pass
+
+        return None
+
+    def _extract_path_hints_from_message(self, message: str) -> list[str]:
+        """
+        사용자 메시지에서 파일/폴더 참조를 추출합니다.
+
+        감지 대상:
+        - 확장자가 있는 파일명: README.md, config.py, data.csv
+        - 슬래시로 구분된 경로: src/, data/raw/
+        - 공통 디렉토리 키워드: data, src, tests, config
+        - 한국어 경로 표현: '데이터 폴더' → 'data', '소스' → 'src'
+        """
+        import re
+        hints = set()
+
+        # 패턴 1: 확장자가 있는 파일명 (예: README.md, config.yaml, main.py)
+        for m in re.finditer(
+            r'\b([\w./\-]+\.(?:py|js|ts|md|txt|yaml|yml|json|csv|toml|ini|cfg|sh|html|css|rst|ipynb|r|sql|log))\b',
+            message, re.IGNORECASE
+        ):
+            hints.add(m.group(1).strip('./'))
+
+        # 패턴 2: 경로 형태 (예: data/, src/utils/, ./config)
+        for m in re.finditer(r'\b([\w.\-]+/[\w./\-]*)\b', message):
+            candidate = m.group(1).strip('/')
+            if candidate:
+                hints.add(candidate)
+                # 최상위 디렉토리도 추가
+                top = candidate.split('/')[0]
+                if top:
+                    hints.add(top)
+
+        # 패턴 3: 공통 디렉토리 키워드 (단독 단어로 등장할 때)
+        lower = message.lower()
+        for dirname in self._COMMON_DIR_NAMES:
+            # 단어 경계로 매칭 (예: "data folder", "in src", "the tests directory")
+            if re.search(rf'\b{re.escape(dirname)}\b', lower):
+                hints.add(dirname)
+
+        # 패턴 4: 한국어 경로 표현 매핑
+        ko_mappings = {
+            "데이터": "data", "소스": "src", "테스트": "tests",
+            "설정": "config", "문서": "docs", "스크립트": "scripts",
+            "로그": "logs", "모델": "models", "출력": "output",
+        }
+        for ko, en in ko_mappings.items():
+            if ko in message:
+                hints.add(en)
+
+        return list(hints)
+
+    def _is_path_within_workspace(self, path_hint: str, workspace_root: Path) -> Optional[Path]:
+        """
+        경로 힌트가 워크스페이스 내에 실제로 존재하는지 확인합니다.
+
+        워크스페이스 경계 보안:
+        - 경로 탈출(path traversal) 공격 방지
+        - 워크스페이스 외부 경로는 None 반환
+        """
+        try:
+            candidate = (workspace_root / path_hint).resolve()
+            # 워크스페이스 경계 검사 — 경로 탈출 방지
+            if not str(candidate).startswith(str(workspace_root)):
+                return None
+            if candidate.exists():
+                return candidate
+        except Exception:
+            pass
+        return None
+
+    def _read_workspace_item_for_chat(
+        self,
+        path: Path,
+        workspace_root: Path,
+        max_file_chars: int = 4000,
+        max_dir_entries: int = 50,
+    ) -> str:
+        """
+        워크스페이스 내 파일 또는 디렉토리를 읽어 LLM 컨텍스트용 텍스트를 반환합니다.
+
+        - 파일: 내용을 읽어 반환 (크기 제한 적용)
+        - 디렉토리: 항목 목록을 반환 (재귀 없음)
+        - 이진 파일 등 읽기 불가 항목: 메타정보만 반환
+        """
+        rel_path = path.relative_to(workspace_root)
+
+        if path.is_dir():
+            # 디렉토리: 내부 항목 나열
+            lines = [f"[디렉토리] {rel_path}/"]
+            skip_dirs = {".git", "__pycache__", ".pytest_cache", "venv", ".lta", "node_modules"}
+            entries = sorted(path.iterdir())
+            count = 0
+            for entry in entries:
+                if count >= max_dir_entries:
+                    lines.append(f"  ... ({len(entries) - max_dir_entries}개 더)")
+                    break
+                if entry.name in skip_dirs or entry.name.startswith("."):
+                    continue
+                size_info = ""
+                if entry.is_file():
+                    try:
+                        size_info = f" ({entry.stat().st_size:,} bytes)"
+                    except OSError:
+                        pass
+                    lines.append(f"  {entry.name}{size_info}")
+                else:
+                    lines.append(f"  {entry.name}/")
+                count += 1
+            return "\n".join(lines)
+
+        if path.is_file():
+            # 파일: 내용 읽기
+            # 허용되는 텍스트 확장자 목록
+            text_exts = {
+                ".py", ".js", ".ts", ".md", ".txt", ".yaml", ".yml",
+                ".json", ".csv", ".toml", ".ini", ".cfg", ".sh",
+                ".html", ".css", ".rst", ".r", ".sql", ".log", ".ipynb",
+            }
+            ext = path.suffix.lower()
+            if ext not in text_exts:
+                size = path.stat().st_size if path.exists() else 0
+                return f"[파일] {rel_path} ({size:,} bytes, 텍스트가 아닌 파일)"
+
+            try:
+                content = path.read_text(encoding="utf-8", errors="replace")
+                if len(content) > max_file_chars:
+                    content = content[:max_file_chars] + f"\n... (총 {len(content):,}자 중 {max_file_chars:,}자 표시)"
+                return f"[파일: {rel_path}]\n```{ext.lstrip('.')}\n{content}\n```"
+            except Exception as exc:
+                return f"[파일] {rel_path} (읽기 실패: {exc})"
+
+        return f"[존재하지 않음] {rel_path}"
+
+    def _gather_workspace_context_for_chat(
+        self,
+        message: str,
+        workspace_root: Path,
+        max_total_chars: int = 10000,
+    ) -> str:
+        """
+        사용자 메시지를 분석하여 워크스페이스 내 관련 파일/폴더 내용을 수집합니다.
+
+        단계:
+        1. 메시지에서 파일/폴더 힌트 추출
+        2. 워크스페이스 내 존재 여부 확인 (경계 검사 포함)
+        3. 파일/디렉토리 내용 수집
+        4. researcher.find_relevant_files()로 추가 관련 파일 탐색
+        5. 워크스페이스 최상위 파일 목록 (항상 포함)
+        6. 전체 컨텍스트 예산 내에서 반환
+
+        워크스페이스 경계 규칙:
+        - workspace_root 하위 경로만 접근 허용
+        - 경로 탈출(../등) 시도는 자동 차단
+        - 워크스페이스 외부 경로는 "접근 불가" 안내
+        """
+        parts: list[str] = []
+        total_chars = 0
+
+        def _add(text: str) -> bool:
+            nonlocal total_chars
+            if total_chars >= max_total_chars:
+                return False
+            parts.append(text)
+            total_chars += len(text)
+            return True
+
+        # ── 1단계: 워크스페이스 최상위 구조 항상 포함 ──────────────────────
+        top_items = []
+        skip_top = {".git", "__pycache__", ".pytest_cache", "venv", ".lta", "node_modules", ".env"}
+        try:
+            for item in sorted(workspace_root.iterdir()):
+                if item.name in skip_top or item.name.startswith("."):
+                    continue
+                suffix = "/" if item.is_dir() else ""
+                top_items.append(f"  {item.name}{suffix}")
+        except Exception:
+            pass
+
+        if top_items:
+            ws_summary = (
+                f"[워크스페이스: {workspace_root}]\n"
+                + "\n".join(top_items[:40])
+            )
+            _add(ws_summary)
+
+        # ── 2단계: 메시지에서 경로 힌트 추출 후 내용 수집 ─────────────────
+        hints = self._extract_path_hints_from_message(message)
+        found_paths: set[str] = set()
+
+        for hint in hints:
+            if total_chars >= max_total_chars:
+                break
+            resolved = self._is_path_within_workspace(hint, workspace_root)
+            if resolved and str(resolved) not in found_paths:
+                found_paths.add(str(resolved))
+                item_text = self._read_workspace_item_for_chat(resolved, workspace_root)
+                _add("\n" + item_text)
+
+                # 디렉토리인 경우 내부 파일도 일부 읽기
+                # 우선순위: README/설정 파일 → 데이터 파일(csv/json/txt) → 코드 파일
+                if resolved.is_dir() and total_chars < max_total_chars:
+                    # 1순위: 설명/설정 파일
+                    priority_names = [
+                        "README.md", "README.rst", "__init__.py", "main.py",
+                        "config.py", "config.yaml", "config.yml", "settings.py",
+                    ]
+                    # 2순위: 디렉토리 내 모든 텍스트 파일 (소용량 우선)
+                    text_exts = {".csv", ".json", ".txt", ".py", ".yaml", ".yml",
+                                 ".md", ".toml", ".ini", ".cfg", ".log", ".r", ".sql"}
+                    try:
+                        dir_files = sorted(
+                            (f for f in resolved.iterdir()
+                             if f.is_file() and f.suffix.lower() in text_exts),
+                            key=lambda f: f.stat().st_size  # 작은 파일 먼저
+                        )
+                    except Exception:
+                        dir_files = []
+
+                    # 먼저 priority 파일 읽기
+                    for fname in priority_names:
+                        fpath = resolved / fname
+                        if fpath.exists() and str(fpath) not in found_paths:
+                            found_paths.add(str(fpath))
+                            sub_text = self._read_workspace_item_for_chat(
+                                fpath, workspace_root, max_file_chars=1500
+                            )
+                            if not _add("\n" + sub_text):
+                                break
+
+                    # 나머지 텍스트 파일도 읽기 (최대 5개, 각 1000자)
+                    read_count = 0
+                    for fpath in dir_files:
+                        if total_chars >= max_total_chars or read_count >= 5:
+                            break
+                        if str(fpath) in found_paths:
+                            continue
+                        found_paths.add(str(fpath))
+                        sub_text = self._read_workspace_item_for_chat(
+                            fpath, workspace_root, max_file_chars=1000
+                        )
+                        if not _add("\n" + sub_text):
+                            break
+                        read_count += 1
+
+        # ── 3단계: researcher로 관련 파일 탐색 ─────────────────────────────
+        # researcher.find_relevant_files()는 RAG 인덱스 또는 파일명/내용 기반 검색
+        if self.researcher and self.researcher.fs and total_chars < max_total_chars:
+            try:
+                relevant = self.researcher.find_relevant_files(message)
+                for rel_path in relevant[:5]:
+                    resolved = self._is_path_within_workspace(rel_path, workspace_root)
+                    if resolved and str(resolved) not in found_paths:
+                        found_paths.add(str(resolved))
+                        item_text = self._read_workspace_item_for_chat(
+                            resolved, workspace_root, max_file_chars=2000
+                        )
+                        if not _add("\n" + item_text):
+                            break
+            except Exception as exc:
+                logger.debug("chat 모드 관련 파일 탐색 실패: %s", exc)
+
+        return "\n".join(parts) if parts else ""
+
     def chat_direct(
         self,
         message: str,
@@ -739,21 +1051,72 @@ class OrchestrationEngine:
     ) -> str:
         """
         경량 채팅 모드: 오케스트레이션 파이프라인 없이 LLM에 직접 질문합니다.
-        간단한 질문, 설명 요청, 빠른 대화에 사용합니다.
-        파일 생성·수정 등 복잡한 작업이 필요하면 /mode agent 전환을 안내합니다.
-        """
-        # 경량 채팅용 시스템 프롬프트 — 오케스트레이션 없이 직접 답변
-        system_prompt = (
-            "당신은 유용하고 친절한 AI 어시스턴트입니다. "
-            "사용자의 질문에 직접, 간결하게 답변하세요. "
-            "한국어 또는 사용자가 사용한 언어로 답변하세요. "
-            "파일 생성, 코드 수정, 프로젝트 실행, 테스트 작성 등 "
-            "복잡한 작업이 필요한 경우에는 답변 말미에 "
-            "'이 작업은 agent 모드(/mode agent)에서 더 잘 처리할 수 있습니다.' 라고 안내하세요."
-        )
 
-        # 대화 히스토리를 컨텍스트로 포함 (최근 10개 메시지)
-        prompt_parts = []
+        ─── 워크스페이스 인식 채팅 ─────────────────────────────────────────
+        이 제품은 로컬 워크스페이스에서 실행되는 에이전트입니다.
+        클라우드 챗봇이 아니므로 "파일을 업로드하세요"라고 응답하면 안 됩니다.
+
+        동작 방식:
+        1. 활성 워크스페이스 루트를 결정
+        2. 메시지에서 파일/폴더 참조를 추출하고 실제 내용을 읽음
+        3. 읽은 내용을 LLM 프롬프트에 삽입
+        4. LLM이 실제 파일 내용을 바탕으로 답변
+
+        접근 가능 범위:
+        - 현재 활성 워크스페이스 루트 내의 모든 파일/폴더
+        - 경로 탈출(..)은 차단됨
+
+        복잡한 작업(파일 생성·수정·실행)은 agent 모드 사용을 권장.
+        ────────────────────────────────────────────────────────────────────
+        """
+        # ── 워크스페이스 루트 결정 ─────────────────────────────────────────
+        # 로컬 워크스페이스가 바인딩되어 있으면 실제 파일에 접근한다.
+        workspace_root = self._get_active_workspace_root_for_chat()
+
+        # ── 워크스페이스 컨텍스트 수집 ───────────────────────────────────────
+        # 메시지에서 참조된 파일/폴더를 실제로 읽어 LLM에 전달한다.
+        # 이것이 "파일을 업로드하세요" 응답을 방지하는 핵심 수정이다.
+        workspace_context = ""
+        if workspace_root:
+            try:
+                workspace_context = self._gather_workspace_context_for_chat(message, workspace_root)
+            except Exception as exc:
+                logger.warning("chat 모드 워크스페이스 컨텍스트 수집 실패: %s", exc)
+
+        # ── 시스템 프롬프트 구성 ─────────────────────────────────────────────
+        # workspace_root가 있으면 "로컬 워크스페이스 접근 가능" 명시
+        # workspace_root가 없으면 일반 어시스턴트로 동작
+        if workspace_root:
+            system_prompt = (
+                "당신은 로컬 워크스페이스에서 실행되는 AI 어시스턴트입니다. "
+                f"현재 활성 워크스페이스: {workspace_root}\n\n"
+                "중요한 규칙:\n"
+                "- 이 제품은 로컬 환경에서 실행됩니다. 파일 업로드를 요청하거나 "
+                "  '로컬 파일에 접근할 수 없다'고 말하지 마세요.\n"
+                "- 워크스페이스 내 파일 내용이 아래 컨텍스트에 이미 포함되어 있습니다.\n"
+                "- 그 내용을 바탕으로 직접 답변하세요.\n"
+                "- 한국어 또는 사용자가 사용한 언어로 답변하세요.\n\n"
+                "에스컬레이션 규칙:\n"
+                "- 파일 생성, 코드 수정, 프로젝트 실행, 테스트 작성 등 "
+                "  복잡한 작업이 필요한 경우에는 답변 말미에 "
+                "  '이 작업은 agent 모드(/mode agent)에서 더 잘 처리할 수 있습니다.' 라고 안내하세요."
+            )
+        else:
+            # 워크스페이스가 없는 경우 — 일반 어시스턴트로 동작
+            system_prompt = (
+                "당신은 유용하고 친절한 AI 어시스턴트입니다. "
+                "사용자의 질문에 직접, 간결하게 답변하세요. "
+                "한국어 또는 사용자가 사용한 언어로 답변하세요. "
+                "파일 생성, 코드 수정, 프로젝트 실행, 테스트 작성 등 "
+                "복잡한 작업이 필요한 경우에는 답변 말미에 "
+                "'이 작업은 agent 모드(/mode agent)에서 더 잘 처리할 수 있습니다.' 라고 안내하세요."
+            )
+
+        # ── 프롬프트 구성 ─────────────────────────────────────────────────────
+        # 대화 히스토리 → 워크스페이스 컨텍스트 → 현재 사용자 메시지 순서로 구성
+        prompt_parts: list[str] = []
+
+        # 대화 히스토리 포함 (최근 10개)
         if conversation_history:
             recent = conversation_history[-10:]
             for msg in recent:
@@ -763,10 +1126,25 @@ class OrchestrationEngine:
                     prefix = "사용자" if role == "user" else "어시스턴트"
                     prompt_parts.append(f"{prefix}: {content[:500]}")
 
+        # 워크스페이스 컨텍스트 삽입 — 실제 파일 내용이 담긴 핵심 블록
+        if workspace_context:
+            prompt_parts.append(
+                "\n--- 워크스페이스 파일 컨텍스트 ---\n"
+                + workspace_context
+                + "\n--- 워크스페이스 파일 컨텍스트 끝 ---\n"
+            )
+
         prompt_parts.append(f"사용자: {message}")
         full_prompt = "\n".join(prompt_parts)
 
-        # 매니저 에이전트를 통해 직접 LLM 호출 (fast model 사용 가능)
+        logger.debug(
+            "chat_direct 호출: workspace_root=%s, context_chars=%d, prompt_chars=%d",
+            workspace_root,
+            len(workspace_context),
+            len(full_prompt),
+        )
+
+        # 매니저 에이전트를 통해 직접 LLM 호출
         return self.manager.generate(
             full_prompt,
             system_prompt_override=system_prompt,
