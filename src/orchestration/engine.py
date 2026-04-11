@@ -256,9 +256,15 @@ class OrchestrationEngine:
         if profile.get("is_new_project") and profile.get("language") == "python":
             return True
 
+        # ── 개선: 초기 파일이 있어도 에이전트가 새 Python 파일을 생성했으면 Python 워크플로우 ──
+        # 이전 코드: `not initial_files` 조건 때문에 config.py만 있는 워크스페이스에서
+        # Python 프로젝트 생성 작업을 해도 검증 루프가 실행되지 않는 버그를 수정한다.
         initial_files = state.metadata.get("initial_visible_files") or []
+        initial_py_set = set(f for f in initial_files if f.endswith(".py"))
         changed_files = self._collect_changed_files_from_artifacts(state)
-        return not initial_files and any(path.endswith(".py") for path in changed_files)
+        # 에이전트가 생성한 새 Python 파일이 있으면 Python 워크플로우로 판단
+        new_py_files = [f for f in changed_files if f.endswith(".py") and f not in initial_py_set]
+        return bool(new_py_files)
 
     def _store_result(self, state: OrchestrationState, result: AgentResult) -> None:
         """상태에 결과를 추가하고, 큰 본문은 디스크 캐시로 오프로드한다."""
@@ -288,6 +294,105 @@ class OrchestrationEngine:
             artifact.metadata["content_preview"] = artifact.content[:600]
             artifact.metadata["content_offloaded"] = True
             artifact.content = ""
+
+    def _save_step_artifacts(
+        self,
+        state: OrchestrationState,
+        result: AgentResult,
+    ) -> list[str]:
+        """[A] 태스크 완료 즉시 아티팩트를 워크스페이스 디스크에 저장한다.
+
+        ─── 증분 아티팩트 지속성 ─────────────────────────────────────────
+        태스크가 완료될 때마다 호출되어 해당 태스크의 산출물을 즉시 파일로 저장한다.
+        "메모리에만 완료된 태스크"는 완료된 것이 아니다 — 파일이 디스크에 존재해야
+        다른 에이전트가 읽고 의존할 수 있다.
+
+        반환값: 저장된 파일들의 프로젝트 루트 기준 상대 경로 목록
+        ────────────────────────────────────────────────────────────────
+        """
+        if not self.workspace or not state.project_id:
+            return []
+
+        saved_paths: list[str] = []
+        for artifact in result.artifacts:
+            # 이미 저장된 아티팩트는 건너뜀 (중복 저장 방지)
+            if artifact.persisted:
+                continue
+            if not self._should_persist_artifact(state, result, artifact):
+                continue
+
+            artifact_content = self._hydrate_artifact_content(state, artifact)
+            if not artifact_content:
+                logger.warning(
+                    "[즉시 저장 건너뜀] %s — 빈 콘텐츠: %s (캐시 경로: %s)",
+                    result.agent_name,
+                    artifact.name,
+                    artifact.metadata.get("content_cache_path", "없음"),
+                )
+                continue
+
+            target_path = self._artifact_target_path(artifact)
+            try:
+                if target_path:
+                    saved_path = self.workspace.save_project_file(
+                        state.project_id, target_path, artifact_content
+                    )
+                else:
+                    filename = artifact.name or f"artifact_{artifact.artifact_id}.txt"
+                    subfolder = "reports" if filename.endswith((".md", ".txt", ".rst")) else "artifacts"
+                    saved_path = self.workspace.save_artifact(
+                        state.project_id, filename, artifact_content, subfolder=subfolder
+                    )
+
+                # 저장 완료 후 아티팩트 상태 업데이트
+                relative = self._relative_saved_path(state.project_id, saved_path)
+                artifact.file_path = relative
+                artifact.saved_path = relative
+                artifact.persisted = True  # 다음 _save_artifacts 호출 시 중복 저장 방지
+                saved_paths.append(relative)
+
+                # ── [E] 에이전트 간 통신: 저장된 파일 레지스트리 갱신 ───────
+                # OrchestrationState.get_context_summary() 가 이 레지스트리를 읽어
+                # 하위 에이전트의 프롬프트에 자동으로 삽입한다.
+                if "saved_artifacts" not in state.metadata:
+                    state.metadata["saved_artifacts"] = {}
+                state.metadata["saved_artifacts"][relative] = {
+                    "agent": result.agent_name,
+                    "role": result.agent_role.value,
+                    "task_id": result.task_id,
+                    "saved_at": datetime.now().isoformat(),
+                }
+
+                # ── [팀 에이전트 핸드오프 검증] 저장 직후 디스크 존재 확인 ──
+                # 코더가 아티팩트를 생성했다고 보고해도 실제 파일이 없으면
+                # 다음 에이전트(테스터, 리뷰어)가 읽지 못한다.
+                saved_path_obj = Path(saved_path)
+                if saved_path_obj.exists():
+                    file_size = saved_path_obj.stat().st_size
+                    logger.info(
+                        "[즉시 저장 + 핸드오프 확인] %s → %s (%d bytes, lang=%s)",
+                        result.agent_name,
+                        relative,
+                        file_size,
+                        artifact.language or "?",
+                    )
+                else:
+                    logger.error(
+                        "[핸드오프 검증 실패] 저장 직후 파일이 존재하지 않음: %s (workspace.save_project_file 반환값: %s)",
+                        relative,
+                        saved_path,
+                    )
+
+            except Exception as exc:
+                logger.error(
+                    "아티팩트 즉시 저장 실패 [%s] %s: %s",
+                    result.agent_name,
+                    target_path or artifact.name,
+                    exc,
+                    exc_info=True,
+                )
+
+        return saved_paths
 
     def _hydrate_result_content(self, state: OrchestrationState, result: AgentResult) -> str:
         """오프로드된 결과 본문이 있으면 디스크에서 다시 읽는다."""
@@ -320,13 +425,100 @@ class OrchestrationEngine:
         project_id: Optional[str] = None,
         additional_context: Optional[dict] = None,
     ) -> OrchestrationState:
-        """Run the full multi-agent workflow."""
+        """Run the full multi-agent workflow.
+
+        ─── 재빌드 루프 ────────────────────────────────────────────────────
+        검증 실패(phase=entrypoint, 실행 오류 등)가 발생하면 최대
+        MAX_REBUILD_CYCLES 번까지 전체 계획-실행-검증 사이클을 재시작한다.
+        재시작은 맹목적 재시도가 아니라 이전 실패 정보를 컨텍스트에 포함하여
+        에이전트가 다른 접근법을 취하도록 유도한다.
+        ────────────────────────────────────────────────────────────────────
+        """
+        # 최대 재빌드 사이클 (1 = 재시작 없음, 3 = 2회 재시작 허용)
+        # config.py만 있는 워크스페이스에서: 1차 생성 실패 → 2차 재시도 → 3차 재시도
+        MAX_REBUILD_CYCLES = 3
         start_time = time.time()
+
+        # 워크스페이스 바인딩은 사이클 간 공유하기 위해 바깥에서 처리
+        shared_project_id = project_id
+        prior_failure_context: Optional[dict] = None
+        final_state: Optional[OrchestrationState] = None
+
+        for rebuild_cycle in range(1, MAX_REBUILD_CYCLES + 1):
+            state = self._run_impl(
+                user_task=user_task,
+                project_id=shared_project_id,
+                additional_context=additional_context,
+                rebuild_cycle=rebuild_cycle,
+                prior_failure=prior_failure_context,
+                cycle_start_time=start_time if rebuild_cycle == 1 else time.time(),
+            )
+            final_state = state
+
+            # 성공 → 종료
+            if state.status == TaskStatus.COMPLETED:
+                break
+
+            # ── 재빌드 가능 여부 판단 ─────────────────────────────────────
+            # blocking=True 인 검증 실패만 재시작 대상이다.
+            # 그 외 오류(LLM 오류, 파싱 오류 등)는 재시작해도 의미가 없다.
+            validation = state.metadata.get("project_validation") or {}
+            if not validation.get("blocking"):
+                logger.info("검증 실패 외 원인이므로 재빌드를 건너뜁니다.")
+                break
+            if rebuild_cycle >= MAX_REBUILD_CYCLES:
+                logger.warning("최대 재빌드 사이클(%d)에 도달했습니다. 최종 실패 상태를 반환합니다.", MAX_REBUILD_CYCLES)
+                break
+
+            # 다음 사이클을 위해 실패 컨텍스트 보존
+            shared_project_id = state.project_id  # 같은 워크스페이스 재사용
+            prior_failure_context = {
+                "cycle": rebuild_cycle,
+                "failure_summary": validation.get("failure_summary", ""),
+                "attempt_logs": validation.get("attempt_logs", []),
+                "entrypoint": validation.get("entrypoint"),
+            }
+            self._notify(
+                f"[재빌드 {rebuild_cycle + 1}/{MAX_REBUILD_CYCLES}] "
+                f"검증 실패로 전체 워크플로우를 재시작합니다: "
+                f"{prior_failure_context['failure_summary'][:200]}",
+                "manager",
+            )
+
+        return final_state
+
+    def _run_impl(
+        self,
+        user_task: str,
+        project_id: Optional[str] = None,
+        additional_context: Optional[dict] = None,
+        rebuild_cycle: int = 1,
+        prior_failure: Optional[dict] = None,
+        cycle_start_time: Optional[float] = None,
+    ) -> OrchestrationState:
+        """내부 단일 오케스트레이션 사이클.
+
+        ─── 핵심 개선 사항 ─────────────────────────────────────────────────
+        A. 증분 아티팩트 지속성:
+           - 각 태스크 완료 즉시 _save_step_artifacts() 로 디스크에 저장
+           - 이후 에이전트는 해당 파일을 즉시 읽거나 의존할 수 있음
+        E. 에이전트 간 통신:
+           - OrchestrationState.get_context_summary() 에 저장된 파일 목록 포함
+           - _execute_step() 프롬프트에 현재 워크스페이스 상태 삽입
+        D. 실패 전파:
+           - prior_failure 가 있으면 계획 단계부터 실패 컨텍스트를 주입
+        ────────────────────────────────────────────────────────────────────
+        """
+        start_time = cycle_start_time or time.time()
         state = OrchestrationState(
             original_task=user_task,
             status=TaskStatus.IN_PROGRESS,
         )
         self._current_state = state
+
+        # 재빌드 사이클 메타데이터 기록
+        if rebuild_cycle > 1:
+            state.metadata["rebuild_cycle"] = rebuild_cycle
 
         if project_id and self.workspace:
             try:
@@ -347,6 +539,10 @@ class OrchestrationEngine:
 
         if additional_context:
             state.metadata["additional_context"] = additional_context
+
+        # 이전 실패 컨텍스트를 state에 주입하여 에이전트가 참조할 수 있게 한다.
+        if prior_failure:
+            state.metadata["prior_failure"] = prior_failure
 
         try:
             self._notify("매니저가 작업을 분석 중입니다...", "manager")
@@ -378,6 +574,13 @@ class OrchestrationEngine:
             plan_context = {"task_analysis": str(task_analysis)}
             if additional_context:
                 plan_context.update(additional_context)
+            # ── 재빌드 시: 이전 실패 정보를 플래너에게 전달 ─────────────────
+            if prior_failure:
+                plan_context["prior_failure_summary"] = (
+                    f"[재빌드 사이클 {prior_failure.get('cycle', '?')}]\n"
+                    f"이전 시도 실패: {prior_failure.get('failure_summary', '')[:800]}\n"
+                    f"엔트리포인트: {prior_failure.get('entrypoint') or '미발견'}"
+                )
 
             plan = self.planner.create_plan(user_task, plan_context)
             state.current_plan = plan
@@ -403,12 +606,25 @@ class OrchestrationEngine:
                 step_title = step.get("title", step.get("description", ""))
                 self._notify(f"단계 {step_num}: {step_title} [{agent_name}]", agent_name)
 
-                # ──────────────────────────────────────────
+                # ──────────────────────────────────────────────────────────
                 # 스텝 재시도 루프 (Step Retry Loop)
                 # 일시적 실패는 STEP_RETRY_POLICY 에 따라 재시도합니다.
                 # 치명적 오류 또는 최대 시도 초과 시에만 전체 오케스트레이션을 중단합니다.
-                # ──────────────────────────────────────────
+                # ──────────────────────────────────────────────────────────
                 step_result = self._execute_step_with_retry(state, step, STEP_RETRY_POLICY)
+
+                # ── [A] 태스크 완료 즉시 아티팩트 저장 ────────────────────
+                # 태스크가 성공적으로 완료되는 즉시 디스크에 저장한다.
+                # 메모리에만 존재하는 결과물은 완료된 태스크가 아니다.
+                # 저장된 파일은 이후 에이전트의 컨텍스트(get_context_summary)에 반영된다.
+                if self.workspace and state.project_id and step_result.success:
+                    self._prepare_generated_project_artifacts(state)
+                    saved_now = self._save_step_artifacts(state, step_result)
+                    if saved_now:
+                        self._notify(
+                            f"[즉시 저장] {len(saved_now)}개 파일: {', '.join(saved_now[:3])}",
+                            "system",
+                        )
 
             code_results = state.get_results_by_role(AgentRole.CODER)
             if code_results:
@@ -426,8 +642,11 @@ class OrchestrationEngine:
                 self._store_result(state, self._run_document_agent(state, user_task, code_results))
 
             if self.workspace and state.project_id:
+                # _prepare + _save_artifacts: 아직 저장되지 않은 나머지 아티팩트를 최종 정리한다.
+                # (증분 저장에서 처리되지 않은 리뷰어/문서 에이전트 산출물 등)
                 self._prepare_generated_project_artifacts(state)
                 self._save_artifacts(state)
+
                 if python_project_workflow:
                     verification_result = self._run_python_project_validation_loop(state)
                 else:
@@ -439,7 +658,9 @@ class OrchestrationEngine:
                 if python_project_workflow and self.document_agent and task_analysis.get("task_type") in ["code", "mixed"]:
                     self._notify("문서 에이전트가 실행 검증을 마친 뒤 README를 정리 중입니다...", "document")
                     refreshed_code_results = state.get_results_by_role(AgentRole.CODER)
-                    self._store_result(state, self._run_document_agent(state, user_task, refreshed_code_results))
+                    doc_result = self._run_document_agent(state, user_task, refreshed_code_results)
+                    self._store_result(state, doc_result)
+                    self._save_step_artifacts(state, doc_result)
                     self._save_artifacts(state)
 
             self._notify("매니저가 결과를 통합 중입니다...", "manager")
@@ -465,6 +686,18 @@ class OrchestrationEngine:
                 f"실패 원인: {exc}"
             )
             self._notify(f"오류: {exc}", "error")
+
+            # ── [D] 스텝 실패(RuntimeError 포함)도 재빌드 루프가 처리하도록 한다 ──
+            # project_validation 이 설정되지 않으면 run() 의 재빌드 판단에서
+            # blocking=False 로 간주되어 재빌드가 건너뛰어진다.
+            # 스텝 실행 실패(코더 5회 실패 등)도 재빌드 가능 실패로 표시한다.
+            if not state.metadata.get("project_validation"):
+                state.metadata["project_validation"] = {
+                    "success": False,
+                    "blocking": True,
+                    "failure_summary": str(exc)[:600],
+                    "attempt_logs": [],
+                }
 
         return state
 
@@ -796,6 +1029,30 @@ class OrchestrationEngine:
                 + self._format_additional_context(state.metadata["additional_context"])
             )
 
+        # ── [E] 에이전트 간 통신: 저장된 파일 목록을 프롬프트에 삽입 ──────────────
+        # 이미 디스크에 저장된 파일을 에이전트에게 알려주어 중복 생성이나
+        # 잘못된 import 참조를 방지한다. 에이전트는 이 파일들을 의존하거나 수정할 수 있다.
+        saved_workspace = state.metadata.get("saved_artifacts") or {}
+        if saved_workspace:
+            ws_lines = [
+                f"  - {path} (saved by {info.get('agent', '?') if isinstance(info, dict) else '?'})"
+                for path, info in list(saved_workspace.items())[:20]
+            ]
+            prompt_parts.append(
+                "\nFiles already saved to workspace (available for import/reference):\n"
+                + "\n".join(ws_lines)
+            )
+
+        # 재빌드 사이클이라면 이전 실패 원인을 에이전트에게 알림
+        prior_failure = state.metadata.get("prior_failure")
+        if prior_failure:
+            prompt_parts.append(
+                f"\n[REBUILD CONTEXT] Previous attempt failed:\n"
+                f"{prior_failure.get('failure_summary', '')[:600]}\n"
+                f"Entrypoint found: {prior_failure.get('entrypoint') or 'NONE'}\n"
+                f"Please ensure main.py (or equivalent) is a fully runnable entrypoint."
+            )
+
         prompt_parts.append(
             """
 If you need to create or update project files, always specify the relative path before each code block.
@@ -907,6 +1164,13 @@ Requirements:
         return "\n\n".join(part for part in parts if part)
 
     def _save_artifacts(self, state: OrchestrationState) -> None:
+        """남은 미저장 아티팩트를 일괄 저장한다.
+
+        [B] 태스크 완료 기준:
+        - _save_step_artifacts() 에서 이미 저장된 아티팩트(persisted=True)는 건너뜀.
+        - 이 메서드는 증분 저장에서 처리되지 않은 나머지 아티팩트(리뷰어, 문서 에이전트 등)를
+          정리하는 마무리 단계로만 사용된다.
+        """
         if not self.workspace or not state.project_id:
             return
 
@@ -915,6 +1179,9 @@ Requirements:
             if not result.success:
                 continue
             for artifact in result.artifacts:
+                # 이미 증분 저장된 아티팩트는 건너뜀
+                if artifact.persisted:
+                    continue
                 if not self._should_persist_artifact(state, result, artifact):
                     continue
                 artifact_content = self._hydrate_artifact_content(state, artifact)
@@ -922,21 +1189,44 @@ Requirements:
                     continue
 
                 target_path = self._artifact_target_path(artifact)
-                if target_path:
-                    saved_path = self.workspace.save_project_file(state.project_id, target_path, artifact_content)
-                else:
-                    filename = artifact.name or f"artifact_{artifact.artifact_id}.txt"
-                    subfolder = "reports" if filename.endswith((".md", ".txt", ".rst")) else "artifacts"
-                    saved_path = self.workspace.save_artifact(
-                        state.project_id,
-                        filename,
-                        artifact_content,
-                        subfolder=subfolder,
-                    )
-                artifact.file_path = self._relative_saved_path(state.project_id, saved_path)
-                saved_count += 1
+                try:
+                    if target_path:
+                        saved_path = self.workspace.save_project_file(state.project_id, target_path, artifact_content)
+                    else:
+                        filename = artifact.name or f"artifact_{artifact.artifact_id}.txt"
+                        subfolder = "reports" if filename.endswith((".md", ".txt", ".rst")) else "artifacts"
+                        saved_path = self.workspace.save_artifact(
+                            state.project_id,
+                            filename,
+                            artifact_content,
+                            subfolder=subfolder,
+                        )
+                    relative = self._relative_saved_path(state.project_id, saved_path)
+                    artifact.file_path = relative
+                    artifact.saved_path = relative
+                    artifact.persisted = True
+                    saved_count += 1
 
-        logger.info("Saved %s artifacts", saved_count)
+                    # 레지스트리 갱신
+                    if "saved_artifacts" not in state.metadata:
+                        state.metadata["saved_artifacts"] = {}
+                    if relative not in state.metadata["saved_artifacts"]:
+                        state.metadata["saved_artifacts"][relative] = {
+                            "agent": result.agent_name,
+                            "role": result.agent_role.value,
+                            "task_id": result.task_id,
+                            "saved_at": datetime.now().isoformat(),
+                        }
+                except Exception as exc:
+                    logger.error(
+                        "아티팩트 일괄 저장 실패 [%s] %s: %s",
+                        result.agent_name,
+                        target_path or artifact.name,
+                        exc,
+                        exc_info=True,
+                    )
+
+        logger.info("일괄 저장 완료: %s개 아티팩트", saved_count)
 
     def _should_persist_artifact(
         self,
@@ -1008,7 +1298,20 @@ Requirements:
             return
 
         unnamed_python = [artifact for artifact in python_artifacts if not artifact.file_path]
+
         if not unnamed_python:
+            # ── 이름 있는 Python 아티팩트만 있고 main.py 가 없는 경우 ─────────
+            # 파일 이름을 강제로 바꾸면 다른 모듈의 import 경로가 깨질 수 있으므로,
+            # 여기서는 경로를 변경하지 않는다.
+            # _discover_python_entrypoint 의 3단계 내용 스캔이 if __name__ == '__main__' 패턴을
+            # 가진 파일을 찾을 것이며, 찾지 못하면 repair loop 에서 main.py 를 생성한다.
+            if python_artifacts:
+                logger.debug(
+                    "[아티팩트 준비] 이름 있는 Python 아티팩트 %d개, main.py 없음 "
+                    "(엔트리포인트 탐색 또는 repair loop 에 위임): %s",
+                    len(python_artifacts),
+                    [a.file_path for a in python_artifacts[:5]],
+                )
             return
 
         entrypoint_artifact = max(unnamed_python, key=self._entrypoint_priority)
@@ -1102,17 +1405,193 @@ Requirements:
         project_root = self.workspace.get_project_path(state.project_id)
         return [path for path in self._list_visible_project_files(project_root, limit=500) if path.endswith(".py")]
 
+    def _detect_file_package_conflicts(self, state: OrchestrationState, python_files: list[str]) -> list[dict]:
+        """[E] 파일/패키지 이름 충돌 검사.
+
+        예: data_processor.py 와 data_processor/ 디렉토리가 동시에 존재하면
+        Python import 시 모듈 섀도잉(shadowing) 발생.
+
+        반환값: 충돌 정보 목록 (빈 리스트 = 충돌 없음)
+        """
+        if not self.workspace or not state.project_id:
+            return []
+
+        project_root = self.workspace.get_project_path(state.project_id)
+        conflicts = []
+
+        for rel_path in python_files:
+            p = Path(rel_path)
+            # 루트 레벨 Python 파일만 검사 (서브 디렉토리 파일은 스킵)
+            if p.parent != Path(".") and str(p.parent) != ".":
+                continue
+            module_name = p.stem
+            if module_name.startswith("_"):
+                continue  # __init__, __main__ 등 특수 파일 제외
+
+            potential_package = project_root / module_name
+            if potential_package.is_dir():
+                init_file = potential_package / "__init__.py"
+                # 패키지가 실제 Python 패키지인지 확인 (__init__.py 존재 여부)
+                conflict_type = "shadowed_by_package" if init_file.exists() else "directory_name_collision"
+                conflicts.append({
+                    "type": conflict_type,
+                    "module_name": module_name,
+                    "file": rel_path,
+                    "package_dir": f"{module_name}/",
+                    "has_init": init_file.exists(),
+                    "message": (
+                        f"모듈 이름 충돌: `{rel_path}` 파일과 `{module_name}/` 디렉토리가 동시에 존재합니다. "
+                        f"Python은 {'패키지' if init_file.exists() else '디렉토리'}를 먼저 사용합니다. "
+                        f"하나를 삭제하거나 이름을 바꿔야 합니다 "
+                        f"(예: `{module_name}_util.py` 또는 `{module_name}_pkg/`)."
+                    ),
+                })
+
+        if conflicts:
+            logger.warning(
+                "[파일/패키지 충돌 감지] %d개 충돌: %s",
+                len(conflicts),
+                [c["module_name"] for c in conflicts],
+            )
+
+        return conflicts
+
     def _has_project_tests(self, python_files: list[str]) -> bool:
         return any(path.startswith("tests/") or Path(path).name.startswith("test_") for path in python_files)
 
+    def _check_self_import(self, rel_path: str, project_root: Path) -> list[str]:
+        """[self-import 버그 감지] 파일이 자신의 모듈 이름으로 import하는 패턴을 탐지한다.
+
+        예: analyze_data.py 가 `from analyze_data import X` 를 포함하면 self-import.
+        Python은 실행 중인 스크립트를 다시 import하려 할 때 circular import 오류를 발생시킨다.
+
+        반환값: 감지된 self-import 패턴 목록 (빈 리스트 = 문제 없음)
+        """
+        import re as _re
+
+        module_name = Path(rel_path).stem
+        full_path = project_root / rel_path
+        if not full_path.exists():
+            return []
+        try:
+            content = full_path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            return []
+
+        found = []
+        # from <module_name> import ... (정확한 모듈 이름 매칭)
+        if _re.search(rf"^\s*from\s+{_re.escape(module_name)}\s+import", content, _re.MULTILINE):
+            found.append(f"from {module_name} import ...")
+        # import <module_name> (standalone import)
+        if _re.search(rf"^\s*import\s+{_re.escape(module_name)}\s*(?:,|#|$)", content, _re.MULTILINE):
+            found.append(f"import {module_name}")
+        return found
+
     def _discover_python_entrypoint(self, state: OrchestrationState) -> Optional[str]:
+        """[F] 실행 가능한 Python 엔트리포인트를 탐색한다.
+
+        ─── phase=entrypoint 실패 해결 ──────────────────────────────────
+        단순 파일명 매칭 대신 다단계 탐색 전략을 사용:
+        1. 명시적 엔트리포인트 후보 (main.py, app.py, cli.py 등)
+        2. 경로 패턴 매칭 (__main__.py, manage.py)
+        3. 파일 내용 스캔 (__name__ == '__main__' 패턴)
+
+        엔트리포인트를 찾지 못하면 상세한 진단 로그를 출력한다.
+        ────────────────────────────────────────────────────────────────
+        """
         python_files = self._collect_project_python_files(state)
-        for candidate in ["main.py", "src/main.py", "__main__.py"]:
+        logger.debug(
+            "엔트리포인트 탐색 시작: Python 파일 %d개 발견: %s",
+            len(python_files),
+            python_files[:10],
+        )
+
+        # 1단계: 명시적 엔트리포인트 후보 목록 (우선순위 순)
+        primary_candidates = [
+            "main.py",
+            "src/main.py",
+            "__main__.py",
+            # app.py, cli.py, run.py 등은 라이브러리 모듈일 수도 있으므로
+            # 1단계에서 무조건 엔트리포인트로 인정하지 않는다.
+            # 3단계 내용 스캔(if __name__ == '__main__' 패턴)을 통해서만 인정한다.
+        ]
+        for candidate in primary_candidates:
             if candidate in python_files:
+                logger.info("엔트리포인트 발견 [1단계 명시적 후보]: %s", candidate)
                 return candidate
+
+        # 2단계: 경로 패턴 매칭
         for path in python_files:
-            if path.endswith("/__main__.py") or Path(path).name == "manage.py":
+            basename = Path(path).name
+            if path.endswith("/__main__.py") or basename == "manage.py":
+                logger.info("엔트리포인트 발견 [2단계 패턴]: %s", path)
                 return path
+
+        # 3단계: 파일 내용 스캔 — __name__ == '__main__' 패턴 검색
+        if self.workspace and state.project_id:
+            project_root = self.workspace.get_project_path(state.project_id)
+            scored: list[tuple[int, str]] = []
+            for rel_path in python_files:
+                full_path = project_root / rel_path
+                if not full_path.exists():
+                    continue
+                try:
+                    content = full_path.read_text(encoding="utf-8", errors="replace")
+                    score = 0
+                    if "__name__ == '__main__'" in content or '__name__ == "__main__"' in content:
+                        score += 8
+                    if "def main(" in content or "async def main(" in content:
+                        score += 5
+                    if "argparse" in content.lower() or "typer" in content.lower():
+                        score += 3
+                    if "if __name__" in content:
+                        score += 2
+                    if score > 0:
+                        # ── [self-import 방지] 자기 자신을 import하는 파일은 엔트리포인트로 선택하지 않는다 ──
+                        # analyze_data.py 가 `from analyze_data import X` 를 포함하면
+                        # python analyze_data.py 실행 시 circular import 오류 발생.
+                        self_imports = self._check_self_import(rel_path, project_root)
+                        if self_imports:
+                            logger.warning(
+                                "엔트리포인트 후보 제외 [self-import 감지]: %s → %s "
+                                "(이 파일을 엔트리포인트로 실행하면 circular import 오류 발생)",
+                                rel_path,
+                                self_imports,
+                            )
+                            continue  # 이 파일은 엔트리포인트로 사용 불가
+                        scored.append((score, rel_path))
+                except Exception as exc:
+                    logger.debug("파일 내용 스캔 실패 %s: %s", rel_path, exc)
+
+            if scored:
+                scored.sort(reverse=True)
+                best_score, best_path = scored[0]
+                logger.info(
+                    "엔트리포인트 발견 [3단계 내용 스캔]: %s (score=%d)",
+                    best_path,
+                    best_score,
+                )
+                return best_path
+
+        # ── 엔트리포인트 미발견: 상세 진단 로그 ─────────────────────────
+        if self.workspace and state.project_id:
+            project_root = self.workspace.get_project_path(state.project_id)
+            all_files = self._list_visible_project_files(project_root, limit=50)
+        else:
+            all_files = python_files
+
+        logger.warning(
+            "엔트리포인트 탐색 실패!\n"
+            "  스캔한 Python 파일 (%d개): %s\n"
+            "  워크스페이스 전체 파일 (%d개): %s\n"
+            "  저장된 아티팩트: %s\n"
+            "  해결 방법: 코더에게 main.py (또는 app.py)를 생성하도록 지시하세요.",
+            len(python_files),
+            python_files[:10],
+            len(all_files),
+            all_files[:15],
+            list((state.metadata.get("saved_artifacts") or {}).keys())[:10],
+        )
         return None
 
     def _build_project_file_context(self, state: OrchestrationState, file_paths: list[str], max_chars: int = 1800) -> str:
@@ -1139,6 +1618,7 @@ Requirements:
         return "\n\n".join(sections)
 
     def _summarize_validation_failure(self, failure: dict) -> str:
+        """[F] 검증 실패 요약 — phase=entrypoint 등 모든 phase를 명확한 진단 메시지로 변환한다."""
         phase = failure.get("phase", "validation")
         parts = [f"phase={phase}"]
 
@@ -1149,6 +1629,56 @@ Requirements:
         if python_files:
             parts.append(f"python_files={', '.join(python_files[:8])}")
 
+        # [검증 게이트] Python 파일이 아예 없는 경우
+        if phase == "no_python_files":
+            actual_files = failure.get("actual_workspace_files") or []
+            parts.append(
+                f"diagnosis=Python 구현 파일(.py)이 워크스페이스에 없습니다. "
+                f"코더가 실제 Python 소스 파일을 생성해야 합니다. "
+                f"현재 워크스페이스({len(actual_files)}개 파일): {', '.join(actual_files[:15])}"
+            )
+            return "\n".join(part for part in parts if part)
+
+        # [self-import 버그] 엔트리포인트가 자신의 모듈 이름으로 import하는 경우
+        if phase == "self_import":
+            self_imports = failure.get("self_imports") or []
+            entrypoint = failure.get("entrypoint", "")
+            module_name = Path(entrypoint).stem if entrypoint else ""
+            parts.append(
+                f"diagnosis=self-import circular import 버그. "
+                f"`{entrypoint}`(모듈명: `{module_name}`) 파일이 자신을 import합니다: {self_imports}. "
+                f"수정 방법: (1) `main.py`를 새로 만들어 실제 로직을 호출하는 얇은 진입점으로 사용하고, "
+                f"(2) `{entrypoint}`에서 self-import(`from {module_name} import ...`) 줄을 제거하세요. "
+                f"엔트리포인트 파일은 절대로 자신의 모듈 이름으로 import하면 안 됩니다."
+            )
+            return "\n".join(part for part in parts if part)
+
+        # [검증 게이트-2] 에이전트가 새 Python 파일을 생성하지 않은 경우 (초기 config 파일만 있음)
+        if phase == "no_new_python_files":
+            actual_files = failure.get("actual_workspace_files") or []
+            initial_py = failure.get("initial_python_files") or []
+            parts.append(
+                f"diagnosis=에이전트가 새 Python 구현 파일을 생성하지 않았습니다. "
+                f"초기 Python 파일({len(initial_py)}개, 엔트리포인트 불가): {', '.join(initial_py[:8])}. "
+                f"코더가 main.py 를 포함한 실제 구현 파일을 생성해야 합니다. "
+                f"현재 워크스페이스({len(actual_files)}개 파일): {', '.join(actual_files[:15])}"
+            )
+            return "\n".join(part for part in parts if part)
+
+        # phase=entrypoint 에 대한 추가 진단 정보
+        if phase == "entrypoint":
+            actual_files = failure.get("actual_workspace_files") or []
+            if actual_files:
+                parts.append(f"workspace_files={', '.join(actual_files[:15])}")
+            diagnosis = failure.get("diagnosis") or ""
+            if diagnosis:
+                parts.append(f"diagnosis={diagnosis[:600]}")
+            if not python_files and not actual_files:
+                parts.append(
+                    "diagnosis=워크스페이스에 Python 파일이 없습니다. "
+                    "코더가 실제 구현 파일(main.py)을 생성했는지 확인하세요."
+                )
+
         execution = failure.get("execution") or {}
         if execution:
             parts.append(f"command={execution.get('command', '')}")
@@ -1157,6 +1687,17 @@ Requirements:
             if stdout:
                 parts.append(f"stdout={stdout[:600]}")
             if stderr:
+                # [D] 오류 유형 분류: import 오류 vs 런타임 오류 vs 경로 오류 vs circular import
+                if "ModuleNotFoundError" in stderr or "ImportError" in stderr:
+                    parts.append(f"error_type=import_error")
+                elif "RuntimeError" in stderr or "ValueError" in stderr or "TypeError" in stderr:
+                    parts.append(f"error_type=runtime_error")
+                elif "FileNotFoundError" in stderr or "No such file" in stderr:
+                    parts.append(f"error_type=path_mismatch")
+                elif "circular import" in stderr.lower() or "partially initialized module" in stderr.lower():
+                    parts.append(f"error_type=circular_import")
+                elif "SyntaxError" in stderr:
+                    parts.append(f"error_type=syntax_error")
                 parts.append(f"stderr={stderr[:1200]}")
 
         verification = failure.get("verification") or {}
@@ -1497,30 +2038,61 @@ Requirements:
             context_files.append(config_path)
 
         project_root = Path(state.metadata.get("project_root", "."))
-        prompt = "\n".join(
-            [
-                "The generated Python project is not yet runnable.",
-                f"Repair attempt: {attempt}",
+        phase = failure.get("phase", "")
+
+        prompt_lines = [
+            "The generated Python project is not yet runnable.",
+            f"Repair attempt: {attempt}",
+            "",
+            "Validation failure:",
+            self._summarize_validation_failure(failure),
+            "",
+            "Current project files:",
+            "\n".join(f"- {path}" for path in self._list_visible_project_files(project_root, limit=40)),
+            "",
+            "Current file contents:",
+            self._build_project_file_context(state, context_files),
+            "",
+        ]
+
+        # ── phase=entrypoint 전용 명시적 지시 ──────────────────────────────
+        # 단순히 "프로젝트가 실행되지 않는다"고만 말하면 코더가 기존 파일을
+        # 수정하려 시도할 수 있다. 엔트리포인트가 없는 경우에는 명시적으로
+        # main.py 생성을 요구한다.
+        if phase == "entrypoint":
+            existing_py = failure.get("python_files") or python_files
+            prompt_lines.extend([
+                "*** CRITICAL: No executable Python entrypoint was found in the workspace. ***",
+                "The existing Python files are helper/library/config files that CANNOT be entrypoints:",
+                "\n".join(f"  - {f}" for f in existing_py[:8]),
                 "",
-                "Validation failure:",
-                self._summarize_validation_failure(failure),
+                "You MUST create `main.py` at the project root with:",
+                "  1. A `def main():` function that runs the actual program logic.",
+                "  2. An `if __name__ == '__main__':` block at the bottom.",
+                "  3. A `--smoke-test` argument that runs a quick self-test and exits with code 0.",
+                "  4. Imports from the existing helper files listed above.",
                 "",
-                "Current project files:",
-                "\n".join(f"- {path}" for path in self._list_visible_project_files(project_root, limit=40)),
+                "Do NOT modify the existing helper files as the only output.",
+                "Do NOT return only a plan or description.",
+                "Return complete file contents starting with `File: main.py`.",
                 "",
-                "Current file contents:",
-                self._build_project_file_context(state, context_files),
-                "",
-                "Return only corrected file contents with explicit relative paths.",
-                "Requirements:",
-                "- Guarantee a real executable Python entrypoint in main.py unless __main__.py/manage.py is clearly more conventional.",
-                "- `python main.py --smoke-test` must exit with code 0.",
-                "- The smoke-test path must exercise the real application wiring and then exit cleanly.",
-                "- Fix missing local modules, imports, and runtime errors shown above.",
-                "- Make package/module layout and pyproject/setup entrypoints resolve to real files and callables.",
-                "- If you introduce or keep external dependencies, update requirements.txt or pyproject.toml consistently.",
-            ]
-        )
+            ])
+
+        prompt_lines.extend([
+            "Return only corrected file contents with explicit relative paths.",
+            "Requirements:",
+            "- Guarantee a real executable Python entrypoint in main.py unless __main__.py/manage.py is clearly more conventional.",
+            "- `python main.py --smoke-test` must exit with code 0.",
+            "- The smoke-test path must exercise the real application wiring and then exit cleanly.",
+            "- Fix missing local modules, imports, and runtime errors shown above.",
+            "- Make package/module layout and pyproject/setup entrypoints resolve to real files and callables.",
+            "- If you introduce or keep external dependencies, update requirements.txt or pyproject.toml consistently.",
+            "- CRITICAL — Prevent self-import circular imports:",
+            "  * `main.py` must NEVER contain `from main import ...` or `import main`.",
+            "  * No file should import from its own module name (e.g. `analyze_data.py` must not contain `from analyze_data import ...`).",
+            "  * Design: main.py = thin runner that imports from library modules; library modules have no __main__ blocks.",
+        ])
+        prompt = "\n".join(prompt_lines)
 
         content = self.coder.generate(prompt)
         artifacts = self.coder._parse_code_response(content)
@@ -1536,6 +2108,213 @@ Requirements:
             metadata={
                 "repair_loop": "python_project_runtime",
                 "repair_attempt": attempt,
+            },
+        )
+
+    def _request_missing_python_implementation(
+        self,
+        state: OrchestrationState,
+        attempt: int,
+        workspace_files: list[str],
+    ) -> AgentResult:
+        """[검증 게이트] Python 구현 파일이 없을 때 코더에게 직접 생성을 요청한다.
+
+        ─── 0 Python files 특수 처리 ────────────────────────────────────────
+        일반 repair 프롬프트와 달리, 이 메서드는:
+        1. 코더가 "설명" 이나 "계획" 이 아닌 실제 .py 파일을 즉시 생성해야 함을 명시한다.
+        2. main.py 의 최소 요건(실행 가능한 엔트리포인트, smoke-test 통과)을 구체적으로 요청한다.
+        3. 워크스페이스의 현재 상태(비 Python 파일 목록)를 컨텍스트로 전달한다.
+        ────────────────────────────────────────────────────────────────────
+        """
+        original_task = state.original_task
+        project_root = Path(state.metadata.get("project_root", "."))
+
+        # 워크스페이스에 있는 비-Python 파일을 컨텍스트로 제공
+        existing_context = self._build_project_file_context(
+            state,
+            [f for f in workspace_files if not f.endswith(".py")][:5],
+        )
+
+        prompt_parts = [
+            f"CRITICAL: The project workspace has NO Python (.py) source files.",
+            f"This is generation attempt {attempt}.",
+            "",
+            f"Original task: {original_task}",
+            "",
+            "The workspace currently contains only these files (no Python source):",
+            "\n".join(f"  - {f}" for f in workspace_files[:20]) or "  (empty)",
+            "",
+        ]
+        if existing_context:
+            prompt_parts.extend([
+                "Existing non-Python file contents for reference:",
+                existing_context[:1500],
+                "",
+            ])
+        prompt_parts.extend([
+            "YOU MUST NOW generate actual Python source files.",
+            "Requirements (MANDATORY):",
+            "  1. Create `main.py` as the executable entrypoint.",
+            "  2. `main.py` must contain `if __name__ == '__main__':` block.",
+            "  3. `python main.py --smoke-test` must exit with code 0.",
+            "  4. Add a `--smoke-test` argument that runs a quick self-test and exits cleanly.",
+            "  5. Return complete file contents with explicit relative paths (e.g. `File: main.py`).",
+            "  6. Do NOT return only documentation, plans, file trees, or markdown without code.",
+            "  7. Every file you return must be complete Python source that can be saved and run.",
+            "  8. CRITICAL — Avoid self-import circular imports:",
+            "     - `main.py` must NEVER contain `from main import ...` or `import main`.",
+            "     - No implementation file (e.g. `analyze_data.py`) should import from its own module name.",
+            "     - Separate concerns: main.py = thin runner, implementation files = library modules.",
+            "     - If analyze_data.py defines classes, main.py imports them: `from analyze_data import MyClass`.",
+            "     - analyze_data.py must NOT contain `from analyze_data import ...`.",
+            "",
+            "Minimum required files to return:",
+            "  - main.py  (must be the primary executable entrypoint, no self-imports)",
+            "  - Any supporting modules as needed (library modules, no __main__ blocks)",
+            "",
+            "Output format (repeat for each file):",
+            "File: <relative_path>",
+            "```python",
+            "# complete file contents here",
+            "```",
+        ])
+
+        prompt = "\n".join(prompt_parts)
+        content = self.coder.generate(prompt)
+        artifacts = self.coder._parse_code_response(content)
+
+        # 이 경우에는 엄격한 blueprint 검사를 적용하되,
+        # 결과가 없어도 soft-fail (success=False) 만 반환하고 예외는 내지 않는다.
+        valid, error = self._validate_coder_output(content, artifacts)
+
+        logger.info(
+            "[0 Python files 수정 요청] attempt=%d, artifacts=%d, valid=%s",
+            attempt,
+            len(artifacts),
+            valid,
+        )
+
+        return AgentResult(
+            task_id=str(uuid.uuid4()),
+            agent_name=self.coder.name,
+            agent_role=AgentRole.CODER,
+            content=content,
+            artifacts=artifacts,
+            success=valid,
+            error=error if not valid else None,
+            metadata={
+                "repair_loop": "missing_python_implementation",
+                "repair_attempt": attempt,
+                "repair_strategy": "create_from_scratch",
+            },
+        )
+
+    def _repair_self_import_entrypoint(
+        self,
+        state: OrchestrationState,
+        failure: dict,
+        attempt: int,
+    ) -> AgentResult:
+        """[self-import 수정] 엔트리포인트가 자신을 import할 때 main.py 구조 분리를 요청한다.
+
+        ─── 문제 패턴 ────────────────────────────────────────────────────────────
+        analyze_data.py:
+            from analyze_data import AnalysisEngine   # ← self-import!
+            if __name__ == '__main__': ...
+
+        실행: python analyze_data.py
+            → Python이 `analyze_data` 모듈을 import 시도
+            → 이미 실행 중인 analyze_data.py를 다시 로드
+            → circular import 오류
+
+        ─── 수정 전략 ────────────────────────────────────────────────────────────
+        1. 기존 파일(analyze_data.py)에서 self-import 줄 제거
+        2. 새로운 main.py를 작성해 analyze_data 모듈을 올바르게 import
+        3. main.py가 --smoke-test 지원하는 진입점이 됨
+        ────────────────────────────────────────────────────────────────────────
+        """
+        entrypoint = failure.get("entrypoint", "")
+        module_name = Path(entrypoint).stem if entrypoint else "module"
+        self_imports = failure.get("self_imports") or []
+
+        # 현재 엔트리포인트 파일 내용 읽기 (컨텍스트 제공용)
+        entrypoint_content = ""
+        if self.workspace and state.project_id and entrypoint:
+            project_root = self.workspace.get_project_path(state.project_id)
+            try:
+                entrypoint_content = (project_root / entrypoint).read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
+        python_files = self._collect_project_python_files(state)
+        file_context = self._build_project_file_context(state, python_files[:5])
+
+        prompt_parts = [
+            f"CRITICAL BUG: Self-import circular import detected in the project entrypoint.",
+            f"",
+            f"Problem:",
+            f"  File `{entrypoint}` (Python module name: `{module_name}`) contains these self-import lines:",
+            "\n".join(f"    {s}" for s in self_imports),
+            f"",
+            f"  When Python executes `python {entrypoint}`, it encounters `from {module_name} import ...`",
+            f"  and tries to import the `{module_name}` module — which IS the file being run.",
+            f"  This causes: ImportError: cannot import name '...' from partially initialized module",
+            f"",
+            f"REQUIRED FIX (two files must be returned):",
+            f"",
+            f"  1. Fix `{entrypoint}` — REMOVE all self-import lines (`from {module_name} import ...`).",
+            f"     The file should contain only the class/function definitions, NO `if __name__` block.",
+            f"     It is a LIBRARY MODULE, not a runner.",
+            f"",
+            f"  2. Create a NEW `main.py` at the project root that:",
+            f"     - imports from `{module_name}` (the fixed library module)",
+            f"     - has `def main():` function that runs the program",
+            f"     - has `if __name__ == '__main__': raise SystemExit(main())`",
+            f"     - supports `--smoke-test` argument that exits with code 0",
+            f"",
+            f"  RULE: `main.py` must NEVER contain `from main import ...` or `import main`.",
+            f"  RULE: No file should import from its own module name.",
+            f"",
+            f"Original content of `{entrypoint}` (repair attempt {attempt}):",
+            entrypoint_content[:2000],
+            f"",
+            f"Other project files for context:",
+            file_context[:1500],
+            f"",
+            f"Return format (one block per file):",
+            f"File: <relative_path>",
+            f"```python",
+            f"# complete file contents",
+            f"```",
+        ]
+
+        prompt = "\n".join(prompt_parts)
+        content = self.coder.generate(prompt)
+        artifacts = self.coder._parse_code_response(content)
+        valid, error = self._validate_coder_output(content, artifacts)
+
+        logger.info(
+            "[self-import 수정 요청] attempt=%d, artifacts=%d, valid=%s, entrypoint=%s",
+            attempt,
+            len(artifacts),
+            valid,
+            entrypoint,
+        )
+
+        return AgentResult(
+            task_id=str(uuid.uuid4()),
+            agent_name=self.coder.name,
+            agent_role=AgentRole.CODER,
+            content=content,
+            artifacts=artifacts,
+            success=valid,
+            error=error if not valid else None,
+            metadata={
+                "repair_loop": "self_import_fix",
+                "repair_attempt": attempt,
+                "repair_strategy": "separate_main_from_module",
+                "original_entrypoint": entrypoint,
+                "self_imports": self_imports,
             },
         )
 
@@ -1595,13 +2374,245 @@ Requirements:
             self._save_artifacts(state)
 
             python_files = self._collect_project_python_files(state)
+
+            # ── [E] 파일/패키지 이름 충돌 검사 ────────────────────────────────
+            # data_processor.py 와 data_processor/ 디렉토리 동시 존재 등을 감지해
+            # 실행 전에 경고한다. 충돌이 있으면 이후 repair 단계에서 컨텍스트로 제공한다.
+            file_pkg_conflicts = self._detect_file_package_conflicts(state, python_files)
+            if file_pkg_conflicts and attempt == 1:
+                for conflict in file_pkg_conflicts[:3]:
+                    self._notify(f"[파일/패키지 충돌] {conflict['message']}", "tester")
+
+            # ── [검증 게이트] Python 파일 존재 사전 검사 ──────────────────────
+            # 엔트리포인트 탐색 전에 Python 파일이 하나라도 있는지 확인한다.
+            # 없으면 이미 엔트리포인트 탐색이 실패할 것이 자명하므로, 즉시 코더에게
+            # Python 소스 파일 생성을 명시적으로 요청한다.
+            # "README.md 만 있는 워크스페이스"를 완료 상태로 잘못 처리하는 것을 방지한다.
+            if not python_files:
+                if self.workspace and state.project_id:
+                    project_root_path = self.workspace.get_project_path(state.project_id)
+                    all_workspace_files = self._list_visible_project_files(project_root_path, limit=50)
+                else:
+                    all_workspace_files = []
+
+                diagnosis = (
+                    f"Python 구현 파일(.py)이 워크스페이스에 없습니다 (attempt {attempt}). "
+                    f"워크스페이스 전체 파일 {len(all_workspace_files)}개: {all_workspace_files[:20]}. "
+                    f"저장된 아티팩트: {list((state.metadata.get('saved_artifacts') or {}).keys())[:10]}."
+                )
+                logger.warning("[검증 게이트] 0 Python files — %s", diagnosis)
+                self._notify(
+                    f"[검증 게이트] Python 파일 없음 (attempt {attempt}/{max_attempts}) "
+                    f"— 코더에게 구현 파일 생성 요청",
+                    "tester",
+                )
+
+                failure = {
+                    "phase": "no_python_files",
+                    "python_files": [],
+                    "actual_workspace_files": all_workspace_files,
+                    "diagnosis": diagnosis,
+                }
+                last_failure = failure
+                last_failure_summary = self._summarize_validation_failure(failure)
+                attempt_logs.append({
+                    "attempt": attempt,
+                    "phase": "no_python_files",
+                    "success": False,
+                    "detail": diagnosis[:300],
+                })
+
+                if attempt >= max_attempts:
+                    break
+
+                # 코더에게 Python 구현 파일 생성을 명시적으로 요청
+                repair_result = self._request_missing_python_implementation(
+                    state, attempt, all_workspace_files
+                )
+                self._store_result(state, repair_result)
+                attempt_logs.append({
+                    "attempt": attempt,
+                    "phase": "repair_missing_python",
+                    "success": repair_result.success,
+                    "detail": repair_result.error or ", ".join(
+                        a.file_path or a.name for a in repair_result.artifacts[:5]
+                    ),
+                })
+                if repair_result.success:
+                    # 아티팩트 즉시 저장 후 다음 iteration 에서 다시 탐색
+                    self._prepare_generated_project_artifacts(state)
+                    saved_now = self._save_step_artifacts(state, repair_result)
+                    if saved_now:
+                        self._notify(
+                            f"[즉시 저장] Python 파일 {len(saved_now)}개: {', '.join(saved_now[:3])}",
+                            "system",
+                        )
+                else:
+                    last_failure_summary = repair_result.error or "Python 구현 파일 생성 응답이 유효하지 않습니다"
+                continue
+
+            # ── [검증 게이트-2] 에이전트가 새 Python 구현 파일을 생성하지 않은 경우 ─────
+            # 초기 워크스페이스에 이미 있던 Python 파일(config.py 등)만 남아있고
+            # 에이전트가 새로운 Python 파일을 전혀 생성하지 않은 경우.
+            # 예: 워크스페이스에 config.py + 데이터 파일만 있고 에이전트가 main.py를 만들지 않은 경우.
+            # 이 경우는 0-Python-files와 사실상 동일하므로 "처음부터 생성" 경로를 사용한다.
+            initial_python_files_set = set(
+                f for f in (state.metadata.get("initial_visible_files") or [])
+                if f.endswith(".py")
+            )
+            new_python_files = [f for f in python_files if f not in initial_python_files_set]
+            if not new_python_files and initial_python_files_set:
+                if self.workspace and state.project_id:
+                    project_root_path = self.workspace.get_project_path(state.project_id)
+                    all_workspace_files = self._list_visible_project_files(project_root_path, limit=50)
+                else:
+                    all_workspace_files = list(python_files)
+
+                diagnosis = (
+                    f"에이전트가 새 Python 구현 파일을 생성하지 않았습니다 (attempt {attempt}). "
+                    f"초기 Python 파일({len(initial_python_files_set)}개): "
+                    f"{sorted(initial_python_files_set)[:8]}. "
+                    f"이 파일들은 config/helper 파일로 엔트리포인트가 될 수 없습니다. "
+                    f"코더가 main.py 를 포함한 실제 구현 파일을 생성해야 합니다."
+                )
+                logger.warning("[검증 게이트-2] 새 Python 파일 없음 (초기 파일만 있음) — %s", diagnosis)
+                self._notify(
+                    f"[검증 게이트-2] 새 구현 파일 없음 (attempt {attempt}/{max_attempts}) "
+                    f"— 코더에게 main.py 생성 요청",
+                    "tester",
+                )
+
+                failure = {
+                    "phase": "no_new_python_files",
+                    "python_files": python_files,
+                    "initial_python_files": sorted(initial_python_files_set),
+                    "actual_workspace_files": all_workspace_files,
+                    "diagnosis": diagnosis,
+                }
+                last_failure = failure
+                last_failure_summary = self._summarize_validation_failure(failure)
+                attempt_logs.append({
+                    "attempt": attempt,
+                    "phase": "no_new_python_files",
+                    "success": False,
+                    "detail": diagnosis[:300],
+                })
+
+                if attempt >= max_attempts:
+                    break
+
+                repair_result = self._request_missing_python_implementation(
+                    state, attempt, all_workspace_files
+                )
+                self._store_result(state, repair_result)
+                attempt_logs.append({
+                    "attempt": attempt,
+                    "phase": "repair_missing_python",
+                    "success": repair_result.success,
+                    "detail": repair_result.error or ", ".join(
+                        a.file_path or a.name for a in repair_result.artifacts[:5]
+                    ),
+                })
+                if repair_result.success:
+                    self._prepare_generated_project_artifacts(state)
+                    saved_now = self._save_step_artifacts(state, repair_result)
+                    if saved_now:
+                        self._notify(
+                            f"[즉시 저장] Python 파일 {len(saved_now)}개: {', '.join(saved_now[:3])}",
+                            "system",
+                        )
+                else:
+                    last_failure_summary = repair_result.error or "Python 구현 파일 생성 응답이 유효하지 않습니다"
+                continue
+
             entrypoint = self._discover_python_entrypoint(state)
             last_entrypoint = entrypoint
 
             if not entrypoint:
+                # ── [F] phase=entrypoint 실패: 상세 진단 정보 수집 ──────────
+                # 단순한 "엔트리포인트 없음" 메시지 대신, 실제 워크스페이스 상태와
+                # 가능한 원인을 포함하여 코더가 정확히 무엇을 고쳐야 하는지 알 수 있게 한다.
+                if self.workspace and state.project_id:
+                    project_root = self.workspace.get_project_path(state.project_id)
+                    actual_workspace_files = self._list_visible_project_files(project_root, limit=50)
+                else:
+                    actual_workspace_files = python_files
+
+                diagnosis = (
+                    f"엔트리포인트 미발견. "
+                    f"스캔한 Python 파일 {len(python_files)}개: {python_files[:8]}. "
+                    f"워크스페이스 전체 파일 {len(actual_workspace_files)}개: {actual_workspace_files[:15]}. "
+                    f"저장된 아티팩트: {list((state.metadata.get('saved_artifacts') or {}).keys())[:10]}."
+                )
+                logger.warning("phase=entrypoint 실패: %s", diagnosis)
+
+                # ── [self-import 원인 탐색] 엔트리포인트 탐색 실패가 self-import 때문인지 확인 ──
+                # 스테이지 3에서 모든 후보가 self-import로 제외되면 entrypoint=None이 반환된다.
+                # 이 경우 generic entrypoint 수정 대신 self-import 전용 수리를 사용한다.
+                self_import_culprits: list[tuple[str, list[str]]] = []
+                if self.workspace and state.project_id and python_files:
+                    _proj_root_for_check = self.workspace.get_project_path(state.project_id)
+                    for _py_file in python_files:
+                        _si = self._check_self_import(_py_file, _proj_root_for_check)
+                        if _si:
+                            self_import_culprits.append((_py_file, _si))
+
+                if self_import_culprits:
+                    # 엔트리포인트가 없는 이유가 self-import 때문 → 전용 수리 경로 사용
+                    culprit_path, culprit_imports = self_import_culprits[0]
+                    _si_diagnosis = (
+                        f"self-import 버그로 인해 엔트리포인트를 선택할 수 없습니다. "
+                        f"`{culprit_path}`이 자신의 모듈 이름으로 import합니다: {culprit_imports}. "
+                        f"수정: main.py를 분리된 진입점으로 생성하고, {culprit_path}에서 self-import를 제거하세요."
+                    )
+                    logger.warning("[self-import 원인] entrypoint=None 이유: %s", _si_diagnosis)
+                    self._notify(
+                        f"[self-import 버그] {culprit_path} → {culprit_imports} — main.py 분리 필요",
+                        "tester",
+                    )
+                    failure = {
+                        "phase": "self_import",
+                        "entrypoint": culprit_path,
+                        "python_files": python_files,
+                        "self_imports": culprit_imports,
+                        "diagnosis": _si_diagnosis,
+                    }
+                    last_failure = failure
+                    last_failure_summary = self._summarize_validation_failure(failure)
+                    attempt_logs.append({
+                        "attempt": attempt,
+                        "phase": "self_import",
+                        "success": False,
+                        "detail": _si_diagnosis[:300],
+                    })
+                    if attempt < max_attempts:
+                        repair_result = self._repair_self_import_entrypoint(state, failure, attempt)
+                        self._store_result(state, repair_result)
+                        attempt_logs.append({
+                            "attempt": attempt,
+                            "phase": "repair_self_import",
+                            "success": repair_result.success,
+                            "detail": repair_result.error or ", ".join(
+                                a.file_path or a.name for a in repair_result.artifacts[:5]
+                            ),
+                        })
+                        if repair_result.success:
+                            self._prepare_generated_project_artifacts(state)
+                            saved_now = self._save_step_artifacts(state, repair_result)
+                            if saved_now:
+                                self._notify(
+                                    f"[self-import 수정] {len(saved_now)}개 파일: {', '.join(saved_now[:3])}",
+                                    "system",
+                                )
+                        else:
+                            last_failure_summary = repair_result.error or "self-import 수정 실패"
+                    continue
+
                 failure = {
                     "phase": "entrypoint",
                     "python_files": python_files,
+                    "actual_workspace_files": actual_workspace_files,
+                    "diagnosis": diagnosis,
                 }
                 last_failure = failure
                 last_failure_summary = self._summarize_validation_failure(failure)
@@ -1610,10 +2621,66 @@ Requirements:
                         "attempt": attempt,
                         "phase": "entrypoint",
                         "success": False,
-                        "detail": "main.py or equivalent entrypoint is missing",
+                        "detail": diagnosis[:300],
                     }
                 )
             else:
+                # ── [self-import 사전 검사] 실행 전에 엔트리포인트가 자신을 import하는지 확인 ──
+                # 스테이지 3에서 걸러지더라도, main.py 같은 1단계 후보가 self-import를 가질 수 있다.
+                # 예: main.py 가 `from main import X` 를 포함하는 경우.
+                if self.workspace and state.project_id:
+                    _proj_root = self.workspace.get_project_path(state.project_id)
+                    _self_imports = self._check_self_import(entrypoint, _proj_root)
+                    if _self_imports:
+                        _diagnosis = (
+                            f"self-import 버그: `{entrypoint}` 파일이 자신의 모듈 이름으로 import합니다: "
+                            f"{_self_imports}. "
+                            f"python {entrypoint} 실행 시 circular import 오류가 발생합니다. "
+                            f"엔트리포인트는 자신의 모듈 이름('{Path(entrypoint).stem}')으로 import하면 안 됩니다."
+                        )
+                        logger.warning("[self-import 사전 검사] %s", _diagnosis)
+                        self._notify(
+                            f"[self-import 버그] {entrypoint} → {_self_imports} — main.py 구조 분리 필요",
+                            "tester",
+                        )
+                        failure = {
+                            "phase": "self_import",
+                            "entrypoint": entrypoint,
+                            "python_files": python_files,
+                            "self_imports": _self_imports,
+                            "diagnosis": _diagnosis,
+                        }
+                        last_failure = failure
+                        last_failure_summary = self._summarize_validation_failure(failure)
+                        attempt_logs.append({
+                            "attempt": attempt,
+                            "phase": "self_import",
+                            "success": False,
+                            "detail": _diagnosis[:300],
+                        })
+                        if attempt < max_attempts:
+                            repair_result = self._repair_self_import_entrypoint(state, failure, attempt)
+                            self._store_result(state, repair_result)
+                            attempt_logs.append({
+                                "attempt": attempt,
+                                "phase": "repair_self_import",
+                                "success": repair_result.success,
+                                "detail": repair_result.error or ", ".join(
+                                    a.file_path or a.name for a in repair_result.artifacts[:5]
+                                ),
+                            })
+                            if repair_result.success:
+                                self._prepare_generated_project_artifacts(state)
+                                saved_now = self._save_step_artifacts(state, repair_result)
+                                if saved_now:
+                                    self._notify(
+                                        f"[self-import 수정] {len(saved_now)}개 파일: {', '.join(saved_now[:3])}",
+                                        "system",
+                                    )
+                            else:
+                                last_failure_summary = repair_result.error or "self-import 수정 실패"
+                        continue
+
                 execution = self.tester.run_python_smoke_test(
                     entrypoint,
                     timeout=30,
@@ -1787,7 +2854,9 @@ Requirements:
         tree_markers = [
             "├──", "└──", "│",   # Unicode box-drawing (UTF-8 encoded)
             "|--", "+--", "`--",  # ASCII tree alternatives
-            "### ", "## ",
+            # "### " 와 "## " 는 여기서 제거함 — 정상적인 코드 응답에도 마크다운 헤더가 포함될 수 있으며,
+            # 이들이 tree_markers 에 있으면 유효한 코드 블록이 청사진으로 잘못 분류된다.
+            # 대신 blueprint_terms 리스트에 구체적인 청사진 표현을 추가한다.
         ]
         has_blueprint_markers = any(term in lowered for term in blueprint_terms) or any(
             marker in content for marker in tree_markers

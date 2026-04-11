@@ -511,8 +511,8 @@ def _format_config_text(cfg: dict[str, Any]) -> str:
     return "\n".join(
         [
             f"Backend default: {backend.get('default', 'ollama')}",
-            f"Timeout: {backend.get('timeout', 120)}",
-            f"Retry attempts: {backend.get('retry_attempts', 3)}",
+            f"Timeout: {backend.get('timeout', 600)}",
+            f"Retry attempts: {backend.get('retry_attempts', 5)}",
             f"Default model: {ollama_cfg.get('default_model', '-')}",
             f"Fast model: {ollama_cfg.get('fast_model', '-')}",
             f"Vision model: {ollama_cfg.get('vision_model', '-')}",

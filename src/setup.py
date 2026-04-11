@@ -275,8 +275,8 @@ def _create_backend(config: dict, backend_type: str):
             top_p=ollama_cfg.get("top_p", 0.9),
             max_tokens=ollama_cfg.get("context_length", 4096) // 2,
             context_length=ollama_cfg.get("context_length", 4096),
-            timeout=config.get("backend", {}).get("timeout", 120),
-            retry_attempts=config.get("backend", {}).get("retry_attempts", 3),
+            timeout=config.get("backend", {}).get("timeout", 600),
+            retry_attempts=config.get("backend", {}).get("retry_attempts", 5),
             extra={
                 "host": ollama_cfg.get("host", "http://localhost:11434"),
                 "vision_model": ollama_cfg.get("vision_model"),
@@ -291,8 +291,8 @@ def _create_backend(config: dict, backend_type: str):
             model=hf_cfg.get("model_id", "mistralai/Mistral-7B-Instruct-v0.2"),
             temperature=hf_cfg.get("temperature", 0.7),
             max_tokens=hf_cfg.get("max_new_tokens", 4096),
-            timeout=config.get("backend", {}).get("timeout", 120),
-            retry_attempts=config.get("backend", {}).get("retry_attempts", 3),
+            timeout=config.get("backend", {}).get("timeout", 600),
+            retry_attempts=config.get("backend", {}).get("retry_attempts", 5),
             extra={
                 "device": hf_cfg.get("device", "auto"),
                 "load_in_4bit": hf_cfg.get("load_in_4bit", True),

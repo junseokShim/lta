@@ -56,6 +56,11 @@ class Artifact:
     language: Optional[str] = None  # 코드인 경우 언어
     metadata: dict = field(default_factory=dict)
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    # ─── 증분 아티팩트 지속성 추적 ───────────────────────────────────────
+    # persisted=True 이면 이미 디스크에 저장된 아티팩트로, 재저장을 건너뜀
+    # saved_path 는 프로젝트 루트 기준 상대 경로
+    persisted: bool = False
+    saved_path: Optional[str] = None
 
 
 @dataclass
@@ -146,13 +151,35 @@ class OrchestrationState:
         """특정 역할의 결과만 필터링"""
         return [r for r in self.results if r.agent_role == role]
 
+    def get_saved_artifacts(self) -> dict:
+        """워크스페이스에 저장된 아티팩트 레지스트리 반환"""
+        return self.metadata.get("saved_artifacts") or {}
+
     def get_context_summary(self) -> str:
-        """현재까지의 컨텍스트 요약 생성"""
+        """현재까지의 컨텍스트 요약 생성 (저장된 아티팩트 경로 포함)"""
         lines = [f"작업: {self.original_task}", ""]
         if self.current_plan:
             lines.append(f"계획: {self.current_plan.title}")
             for i, step in enumerate(self.current_plan.steps, 1):
                 lines.append(f"  {i}. {step.get('title', step.get('description', ''))}")
+            lines.append("")
+
+        # ─── 에이전트 간 핸드오프: 저장된 파일 목록 공유 ────────────────────
+        # 이미 디스크에 저장된 파일을 하위 에이전트에게 알려주어
+        # 중복 생성이나 잘못된 의존성 참조를 방지한다.
+        saved = self.metadata.get("saved_artifacts") or {}
+        if saved:
+            lines.append("## 현재 워크스페이스에 저장된 파일:")
+            for path, info in list(saved.items())[:15]:
+                agent = info.get("agent", "unknown") if isinstance(info, dict) else "unknown"
+                lines.append(f"  - {path}  (by {agent})")
+            lines.append("")
+
+        # 재빌드 사이클이라면 이전 실패 컨텍스트 포함
+        prior_failure = self.metadata.get("prior_failure")
+        if prior_failure:
+            lines.append(f"## 이전 실패 (사이클 {prior_failure.get('cycle', '?')}):")
+            lines.append(f"  {str(prior_failure.get('failure_summary', ''))[:400]}")
             lines.append("")
 
         # 최근 결과 요약

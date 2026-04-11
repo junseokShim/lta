@@ -940,6 +940,262 @@ response = backend.generate_with_retry(request, policy=custom_policy)
 - 현재 `total_timeout` 기본값은 `None` (무제한)으로, 이론상 무한 루프 가능성 있음. 실무에서는 `total_timeout`을 명시적으로 설정하는 것을 권장합니다.
 - 오류 분류는 키워드 기반으로 동작하므로, 백엔드가 표준 오류 메시지를 반환하지 않으면 분류가 `unknown`으로 처리됩니다.
 
+---
+
+## 오케스트레이션 개선 이력 (v4 — 증분 저장 + 검증 기반 완료)
+
+### 이전 오케스트레이션의 문제점
+
+이전 버전에서는 다음과 같은 구조적 결함이 있었습니다.
+
+1. **메모리 내 완료 문제**: 모든 태스크가 끝날 때까지 아티팩트를 메모리에만 보관하고, 전체 실행이 완료된 후에야 한꺼번에 디스크에 저장했습니다. 중간에 오류가 발생하면 그 전까지의 모든 작업이 유실되었으며, 하위 에이전트는 이전 에이전트가 생성한 파일을 참조할 수 없었습니다.
+
+2. **가짜 완료 상태**: `phase=entrypoint` 실패 시 오류 메시지가 `phase=entrypoint` 한 줄에 그쳐 무엇이 잘못됐는지 알 수 없었습니다. 오케스트레이터는 아무 파일도 실행하지 않고도 "완료"를 선언할 수 있었습니다.
+
+3. **에이전트 간 통신 부재**: 에이전트 간 공유 컨텍스트에는 이전 결과의 텍스트 요약만 있었고, 실제 저장된 파일 목록은 포함되지 않았습니다. 하위 에이전트는 어떤 파일이 이미 존재하는지 알 수 없어 잘못된 import 경로나 중복 파일을 생성했습니다.
+
+4. **재시작 없음**: 검증이 실패하면 전체 실행이 FAILED 상태로 종료되고 재시도가 없었습니다.
+
+---
+
+### A. 태스크별 즉시 아티팩트 저장 (증분 지속성)
+
+각 태스크가 완료되는 즉시 `_save_step_artifacts()` 메서드가 호출되어 아티팩트를 디스크에 저장합니다.
+
+```
+[단계 완료] → _prepare_generated_project_artifacts() → _save_step_artifacts()
+                                                           ↓
+                                                 파일이 즉시 디스크에 기록됨
+                                                           ↓
+                                                 state.metadata["saved_artifacts"] 레지스트리 갱신
+                                                           ↓
+                                               다음 에이전트 프롬프트에 파일 목록 삽입
+```
+
+- `Artifact.persisted = True` 플래그로 이미 저장된 아티팩트를 추적합니다.
+- `_save_artifacts()` (일괄 저장)는 `persisted=True` 아티팩트를 건너뜁니다.
+- 로그에 `[즉시 저장] AgentName → filepath` 형태로 저장 시점이 기록됩니다.
+
+---
+
+### E. 에이전트 간 통신
+
+에이전트 간 통신은 두 가지 경로로 구현됩니다.
+
+**1. 워크스페이스 파일 레지스트리** (`state.metadata["saved_artifacts"]`):
+- 각 아티팩트가 저장될 때 레지스트리에 `경로 → {agent, role, task_id, saved_at}` 항목이 추가됩니다.
+- `OrchestrationState.get_context_summary()`가 이 레지스트리를 읽어 모든 에이전트의 컨텍스트 요약에 삽입합니다.
+- `_execute_step()` 프롬프트에도 현재 워크스페이스에 저장된 파일 목록이 명시적으로 삽입됩니다.
+
+**2. 실패 컨텍스트 전파** (재빌드 시):
+- `state.metadata["prior_failure"]`에 이전 실패 요약, 시도 로그, 발견된 엔트리포인트 정보가 기록됩니다.
+- 플래너 단계에서 이 정보가 `plan_context["prior_failure_summary"]`로 주입됩니다.
+- 코더 프롬프트에 `[REBUILD CONTEXT]` 섹션이 삽입됩니다.
+
+---
+
+### C. 최종 워크스페이스 실행 검증
+
+모든 태스크 완료 후 `_run_python_project_validation_loop()`이 실제로 프로젝트를 실행합니다.
+
+```
+1. _discover_python_entrypoint() — 3단계 탐색:
+   단계 1: main.py, app.py, cli.py, run.py 등 명시적 후보
+   단계 2: __main__.py, manage.py 패턴 매칭
+   단계 3: 파일 내용 스캔 (__name__ == '__main__' 패턴)
+
+2. python {entrypoint} --smoke-test 실행
+
+3. final_verify_python_project() — 문법 검사, 테스트 실행, 패키징 검증
+
+4. 모든 검사 통과 시에만 COMPLETED 선언
+```
+
+---
+
+### D. 검증 실패 시 재시작/재빌드
+
+검증이 실패하면 다음 흐름이 시작됩니다.
+
+```
+검증 루프 내 수리 (최대 5회):
+  1. _maybe_apply_common_runtime_repair() — src-layout 경로 문제 자동 수정
+  2. _maybe_apply_common_packaging_repair() — pyproject.toml/entry point 불일치 수정
+  3. _repair_python_project_from_validation() — 코더에게 실패 정보 전달 후 재구현 요청
+
+전체 재빌드 사이클 (최대 2회):
+  - blocking=True인 검증 실패에만 적용
+  - 동일한 project_id/워크스페이스를 재사용
+  - prior_failure 컨텍스트를 다음 사이클에 주입
+  - 맹목적 재시도가 아니라 실패 정보 기반 재계획
+```
+
+재시작은 다음 경우에만 발동됩니다:
+- `state.metadata["project_validation"]["blocking"] == True`
+- `rebuild_cycle < MAX_REBUILD_CYCLES (2)`
+
+---
+
+### F. phase=entrypoint 실패 해결
+
+이전에는 `Orchestration error: phase=entrypoint`가 발생하면 아무 진단 정보 없이 실패했습니다.
+
+**개선 사항:**
+
+1. **3단계 탐색**: 단순 파일명 매칭 → 경로 패턴 → 파일 내용 스캔 순서로 엔트리포인트를 탐색합니다.
+
+2. **상세 진단 로그**: 탐색 실패 시 다음 정보를 출력합니다:
+   ```
+   엔트리포인트 탐색 실패!
+     스캔한 Python 파일 (N개): [...]
+     워크스페이스 전체 파일 (M개): [...]
+     저장된 아티팩트: [...]
+     해결 방법: 코더에게 main.py (또는 app.py)를 생성하도록 지시하세요.
+   ```
+
+3. **수리 루프 연동**: `_repair_python_project_from_validation()`이 `phase=entrypoint` 실패를 받으면 코더에게 명시적으로 `main.py`를 생성하도록 지시합니다.
+
+4. **후보 목록 확장**: `main.py`, `app.py`, `cli.py`, `run.py`, `server.py`, `start.py` 모두를 탐색합니다.
+
+---
+
+### 실행 및 검증 방법
+
+```bash
+# 새 Python 프로젝트 생성 (증분 저장 + 검증 확인)
+python run.py "간단한 Python CLI 계산기 앱 만들어줘" --managed
+
+# 출력에서 확인할 것:
+# [즉시 저장] Coder → calculator.py       ← 증분 저장
+# [즉시 저장] Coder → requirements.txt   ← 증분 저장
+# 엔트리포인트 발견 [1단계]: main.py       ← 엔트리포인트 탐색
+# 명령 실행: python main.py --smoke-test  ← 실제 실행 검증
+# 최종 결과  [COMPLETED]                  ← 검증 기반 완료
+
+# 생성된 프로젝트 직접 실행
+python workspaces/{project_id}/main.py --smoke-test
+```
+
+---
+
+## 오케스트레이션 개선 이력 (v5 — 0 Python files 게이트 + 재빌드 루프 완성)
+
+### 관찰된 실패 패턴
+
+```
+Orchestration error: phase=entrypoint
+diagnosis: entrypoint not found
+Scanned Python files: 0
+```
+
+워크스페이스에 파일들이 있지만 Python 구현 파일(.py)이 하나도 없는 상태에서 엔트리포인트를 탐색하다 실패하고, 최대 재빌드 사이클을 소진한 뒤 FAILED 반환.
+
+---
+
+### 루트 원인 분석
+
+| # | 원인 | 설명 |
+|---|------|------|
+| 1 | **0 Python files에서 엔트리포인트 탐색 진행** | Python 파일이 없으면 엔트리포인트 탐색이 반드시 실패함에도 gate 없이 탐색을 시도했음 |
+| 2 | **RuntimeError가 재빌드 루프를 건너뜀** | 코더 스텝이 5회 모두 실패해 RuntimeError가 발생하면 `project_validation` 미설정 → `blocking=False` → 재빌드 안 됨 |
+| 3 | **블루프린트 검사 과다 거부** | `"## "`와 `"### "`을 tree_markers로 분류해, 마크다운 헤더가 있는 정상적인 코드 응답이 블루프린트로 거부됨 |
+| 4 | **app.py 등을 1단계 무조건 엔트리포인트로 인정** | `app.py`, `cli.py`, `run.py`가 1단계 primary_candidates에 있어, 라이브러리 모듈인 `app.py`가 엔트리포인트로 잘못 선택됨 |
+| 5 | **핸드오프 검증 없음** | 코더가 아티팩트 생성을 "완료"로 보고해도 실제 디스크 존재 여부를 확인하지 않았음 |
+
+---
+
+### C. 사전 검증 게이트 (pre-entrypoint gate)
+
+`_run_python_project_validation_loop()` 에서 엔트리포인트 탐색 전에 Python 파일 존재 여부를 먼저 확인합니다.
+
+```
+[검증 루프 각 iteration]
+  1. _collect_project_python_files() → python_files
+  2. if not python_files:               ← [새 게이트]
+       로그: "[검증 게이트] 0 Python files"
+       _request_missing_python_implementation() 호출
+       아티팩트 즉시 저장 후 continue
+  3. _discover_python_entrypoint()      ← Python 파일이 있을 때만 실행
+  4. smoke test → final verify
+```
+
+- `_request_missing_python_implementation()`: 0 Python files 전용 수정 요청 메서드
+  - LLM에게 명시적으로 `main.py` + `if __name__ == '__main__':` 생성 요청
+  - `--smoke-test` 인수 지원 필수 조건 포함
+  - 현재 워크스페이스의 비-Python 파일을 컨텍스트로 전달
+
+---
+
+### D. RuntimeError → 재빌드 루프 연결 보완
+
+```python
+# _run_impl except block
+except Exception as exc:
+    state.status = TaskStatus.FAILED
+    ...
+    # 이전에는 project_validation 미설정 → blocking=False → 재빌드 안 됨
+    if not state.metadata.get("project_validation"):
+        state.metadata["project_validation"] = {
+            "success": False,
+            "blocking": True,       ← 재빌드 루프 진입 허용
+            "failure_summary": str(exc)[:600],
+        }
+```
+
+코더 스텝 5회 실패(RuntimeError)도 `blocking=True`로 재빌드 트리거됩니다.
+
+---
+
+### F. 엔트리포인트 탐색 정책 수정
+
+**1단계(unconditional)**에서 `app.py`, `cli.py`, `run.py`를 제거했습니다.
+
+```
+1단계 (이름만으로 인정): main.py, src/main.py, __main__.py 만
+2단계 (경로 패턴): /__main__.py, manage.py
+3단계 (내용 스캔): if __name__ == '__main__' 패턴 — app.py 등도 여기서 발견 가능
+```
+
+- `app.py`가 실제 `if __name__ == '__main__':` 블록이 있으면 3단계에서 발견됨
+- 순수 라이브러리 `app.py`는 탐색 실패 → repair loop → main.py 생성
+
+---
+
+### 팀-에이전트 핸드오프 검증
+
+`_save_step_artifacts()` 에서 아티팩트 저장 직후 파일 존재 여부를 확인합니다.
+
+```
+[즉시 저장 + 핸드오프 확인] Coder → main.py (1234 bytes, lang=python)
+[핸드오프 검증 실패] 저장 직후 파일이 존재하지 않음: main.py  ← 숨겨진 오류 표면화
+```
+
+---
+
+### 블루프린트 검사 완화
+
+`tree_markers`에서 `"## "`와 `"### "`를 제거했습니다.
+
+- 이전: 마크다운 헤더(`## Usage`)가 있으면 blueprint 플래그 → 정상 코드 거부
+- 이후: 실제 tree 문자(├── 등)와 구체적인 blueprint 용어만 검사
+
+---
+
+### 검증 로그에서 확인할 것 (v5)
+
+```
+[검증 게이트] Python 파일 없음 (attempt 1/3) — 코더에게 구현 파일 생성 요청
+[0 Python files 수정 요청] attempt=1, artifacts=2, valid=True
+[즉시 저장 + 핸드오프 확인] Coder → main.py (856 bytes, lang=python)
+엔트리포인트 발견 [1단계 명시적 후보]: main.py
+명령 실행: python main.py --smoke-test
+최종 결과 [COMPLETED]
+```
+
+Python 파일이 없으면 게이트에서 차단하고 즉시 수정 요청 → 저장 확인 → 엔트리포인트 발견 순서로 진행합니다.
+
+---
+
 ## 라이선스
 
 MIT License

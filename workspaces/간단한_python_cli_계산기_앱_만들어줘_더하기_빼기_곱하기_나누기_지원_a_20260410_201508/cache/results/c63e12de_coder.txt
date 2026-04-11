@@ -1,0 +1,162 @@
+제공해주신 프로젝트 구조를 분석한 결과, 핵심 로직은 `calculator.py`에 잘 구현되어 있으나, 이 모듈을 외부에서 실행 가능한 엔트리 포인트로 호출할 수 있는 파일(`main.py`)이 누락되어 있어 유효성 검사(Validation)에 실패했습니다.
+
+요구사항에 따라, **`main.py`** 파일을 생성하여 `argparse`를 사용하여 CLI 인터페이스를 구축하고, `--smoke-test` 플래그를 통해 애플리케이션의 실행 가능성을 검증할 수 있도록 수정했습니다.
+
+### 수정된 파일 목록
+
+1.  `calculator.py`: (변경 없음, 핵심 로직 유지)
+2.  `requirements.txt`: (변경 없음, 표준 라이브러리만 사용)
+3.  `main.py`: (새로 추가된 엔트리 포인트)
+
+---
+
+### 파일 내용
+
+**File: main.py**
+```python
+"""
+애플리케이션의 메인 진입점(Entry Point) 역할을 수행하는 스크립트입니다.
+명령줄 인수를 파싱하고 calculator 모듈의 기능을 사용합니다.
+"""
+import argparse
+import sys
+from typing import List
+
+# 로컬 모듈 임포트
+try:
+    from calculator import calculate, SUPPORTED_OPERATIONS
+except ImportError:
+    print("오류: calculator.py 모듈을 찾을 수 없습니다. 같은 디렉토리에 위치해야 합니다.", file=sys.stderr)
+    sys.exit(1)
+
+def setup_parser() -> argparse.ArgumentParser:
+    """명령줄 인수를 파싱하기 위한 ArgumentParser를 설정합니다."""
+    parser = argparse.ArgumentParser(
+        description="간단한 계산기 CLI 애플리케이션입니다.",
+        epilog="예시: python main.py add 10 5"
+    )
+    parser.add_argument(
+        '--smoke-test', 
+        action='store_true', 
+        help='애플리케이션의 기본 기능이 정상적으로 작동하는지 확인하는 테스트 모드입니다.'
+    )
+    return parser
+
+def run_calculation(args: List[str]) -> None:
+    """
+    명령줄 인수를 받아 계산을 수행하고 결과를 출력합니다.
+    사용법: python main.py <operation> <num1> <num2>
+    """
+    if len(args) < 3:
+        print("사용법 오류: 연산자, 첫 번째 숫자, 두 번째 숫자를 모두 제공해야 합니다.", file=sys.stderr)
+        print(f"지원 연산자: {', '.join(SUPPORTED_OPERATIONS)}", file=sys.stderr)
+        sys.exit(1)
+
+    operation = args[0].lower()
+    try:
+        num1 = float(args[1])
+        num2 = float(args[2])
+    except ValueError:
+        print("오류: 피연산자는 유효한 숫자로 입력해야 합니다.", file=sys.stderr)
+        sys.exit(1)
+
+    if operation not in SUPPORTED_OPERATIONS:
+        print(f"오류: 지원하지 않는 연산자 '{operation}'입니다. 지원 목록: {', '.join(SUPPORTED_OPERATIONS)}", file=sys.stderr)
+        sys.exit(1)
+
+    result = calculate(num1, num2, operation)
+    
+    if isinstance(result, str) and result.startswith("오류"):
+        print(f"계산 실패: {result}", file=sys.stderr)
+        sys.exit(1)
+    else:
+        print(f"계산 결과: {num1} {operation} {num2} = {result}")
+
+def main():
+    """애플리케이션의 메인 실행 함수."""
+    parser = setup_parser()
+    args = parser.parse_args()
+
+    if args.smoke_test:
+        print("--- [Smoke Test Mode] ---")
+        print("smoke-test: 성공적인 계산 시나리오를 테스트합니다.")
+        
+        # smoke-test 시나리오: 10 * 5 = 50.0
+        test_result = calculate(10.0, 5.0, 'multiply')
+        
+        if test_result == 50.0:
+            print("✅ Smoke Test 성공: 기본 계산 로직이 정상적으로 작동합니다.")
+            sys.exit(0)
+        else:
+            print(f"❌ Smoke Test 실패: 예상 결과(50.0)와 다릅니다. 실제 결과: {test_result}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # 일반 실행 모드 (CLI 인수를 직접 사용)
+        # sys.argv[0]은 스크립트 이름이므로 제외하고 나머지 인수를 사용합니다.
+        run_calculation(sys.argv[1:])
+
+if __name__ == "__main__":
+    main()
+```
+
+**File: calculator.py**
+```python
+"""
+계산기 핵심 로직을 담고 있는 모듈입니다.
+순수 함수로 구성되어 있어 테스트 용이성이 높습니다.
+"""
+
+from typing import Union
+
+# 연산자 매핑 딕셔너리 정의
+OPERATIONS = {
+    'add': lambda a, b: a + b,
+    'subtract': lambda a, b: a - b,
+    'multiply': lambda a, b: a * b,
+    'divide': lambda a, b: a / b,
+}
+
+def calculate(num1: float, num2: float, operation: str) -> Union[float, str]:
+    """
+    두 숫자와 연산자에 따라 계산을 수행합니다.
+
+    Args:
+        num1: 첫 번째 피연산자.
+        num2: 두 번째 피연산자.
+        operation: 수행할 연산자 ('add', 'subtract', 'multiply', 'divide').
+
+    Returns:
+        계산 결과 (float) 또는 오류 메시지 (str).
+    """
+    operation_key = operation.lower()
+    
+    if operation_key not in OPERATIONS:
+        return f"오류: 지원하지 않는 연산자입니다. 지원 목록: {', '.join(OPERATIONS.keys())}"
+
+    try:
+        # 0으로 나누기 예외 처리
+        if operation_key == 'divide' and num2 == 0:
+            return "오류: 0으로 나눌 수 없습니다."
+            
+        # 해당 연산자에 맞는 람다 함수를 가져와 실행
+        operation_func = OPERATIONS[operation_key]
+        result = operation_func(num1, num2)
+        return result
+    except Exception as e:
+        # 예상치 못한 오류 처리
+        return f"계산 중 알 수 없는 오류가 발생했습니다: {e}"
+
+# 타입 힌트 및 명확성을 위해 연산자 목록을 상수화합니다.
+SUPPORTED_OPERATIONS = list(OPERATIONS.keys())
+```
+
+**File: requirements.txt**
+```text
+# This calculator uses only standard Python libraries (argparse).
+```
+
+### 주요 수정 사항 및 설명
+
+1.  **`main.py` 추가 (필수):**
+    *   `argparse`를 사용하여 CLI 인수를 처리하는 진입점을 만들었습니다.
+    *   `if __name__ == "__main__":` 블록을 사용하여 스크립트가 직접 실행될 때 `main()` 함수가 호출되도록 보장했습니다

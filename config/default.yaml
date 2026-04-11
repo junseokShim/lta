@@ -12,9 +12,9 @@ backend:
 
 ollama:
   host: "http://localhost:11434"
-  default_model: "gemma4:26b"
+  default_model: "gemma4:e4b"
   vision_model: "llava:7b"
-  fast_model: "gemma4:26b"  # 빠른 작업용 경량 모델
+  fast_model: "llama3.1:8b"  # 빠른 작업용 경량 모델
   temperature: 0.7
   top_p: 0.9
   context_length: 4096
@@ -24,7 +24,7 @@ transformers:
   device: "auto"  # auto = CUDA → MPS (Apple Silicon) → CPU 자동 선택
   load_in_4bit: true  # CUDA 전용 (MPS/CPU에서는 자동으로 무시됨)
   load_in_8bit: false
-  max_new_tokens: 2048
+  max_new_tokens: 4096
   temperature: 0.7
 
 agents:

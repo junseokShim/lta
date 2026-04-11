@@ -26,8 +26,8 @@ class BackendConfig:
     top_p: float = 0.9
     max_tokens: int = 4096
     context_length: int = 4096
-    timeout: int = 120
-    retry_attempts: int = 3
+    timeout: int = 600
+    retry_attempts: int = 5
     # 추가 백엔드별 설정
     extra: dict = field(default_factory=dict)
 

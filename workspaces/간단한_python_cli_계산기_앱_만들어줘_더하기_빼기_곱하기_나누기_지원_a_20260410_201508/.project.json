@@ -1,0 +1,20 @@
+{
+  "project_id": "간단한_python_cli_계산기_앱_만들어줘_더하기_빼기_곱하기_나누기_지원_a_20260410_201508",
+  "name": "간단한 Python CLI 계산기 앱 만들어줘 (더하기, 빼기, 곱하기, 나누기 지원, a",
+  "description": "간단한 Python CLI 계산기 앱 만들어줘 (더하기, 빼기, 곱하기, 나누기 지원, argparse 사용)",
+  "created_at": "2026-04-10T20:15:08.851921",
+  "updated_at": "2026-04-10T20:42:59.048706",
+  "task_count": 0,
+  "generated_files": [
+    "calculator.py",
+    "requirements.txt",
+    "main.py",
+    "README.md",
+    "reports/final_output.md",
+    "logs/run_20260410_204259.log"
+  ],
+  "tags": [],
+  "config": {
+    "mode": "managed"
+  }
+}
